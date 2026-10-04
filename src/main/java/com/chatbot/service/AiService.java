@@ -16,6 +16,9 @@ public class AiService {
     private final SessionService sessionService;
     private final Map<String, Persona> personas = new LinkedHashMap<>();
 
+    @org.springframework.beans.factory.annotation.Value("${gemini.api-key:}")
+    private String defaultGeminiKey;
+
     public AiService(BuiltInAiEngine builtInEngine, ExternalLlmService externalLlmService, SessionService sessionService) {
         this.builtInEngine = builtInEngine;
         this.externalLlmService = externalLlmService;
@@ -89,23 +92,24 @@ public class AiService {
         sessionService.addMessage(sessionId, userMsg);
 
         // 2. Determine reply using requested provider
-        String provider = request.getProvider() != null ? request.getProvider().toLowerCase() : "builtin";
-        String model = request.getModel() != null ? request.getModel() : "neural-expert-v1";
+        String provider = request.getProvider() != null ? request.getProvider().toLowerCase() : "gemini";
+        String model = request.getModel() != null ? request.getModel() : "gemini-3.5-flash";
+        String apiKey = request.getApiKey() != null && !request.getApiKey().isBlank() ? request.getApiKey() : defaultGeminiKey;
         String replyText;
 
         try {
-            if ("openai".equals(provider) && request.getApiKey() != null && !request.getApiKey().isBlank()) {
+            if ("openai".equals(provider) && apiKey != null && !apiKey.isBlank()) {
                 replyText = externalLlmService.callOpenAiCompatible(
-                        request.getApiKey(),
+                        apiKey,
                         model,
                         persona.getSystemPrompt(),
                         session.getMessages(),
                         request.getMessage(),
                         request.getTemperature()
                 );
-            } else if ("gemini".equals(provider) && request.getApiKey() != null && !request.getApiKey().isBlank()) {
+            } else if ("gemini".equals(provider) && apiKey != null && !apiKey.isBlank()) {
                 replyText = externalLlmService.callGemini(
-                        request.getApiKey(),
+                        apiKey,
                         model,
                         persona.getSystemPrompt(),
                         session.getMessages(),
@@ -118,8 +122,7 @@ public class AiService {
                 replyText = builtInEngine.generateReply(request.getMessage(), personaId, session.getMessages());
             }
         } catch (Exception e) {
-            replyText = "⚠️ **Error connecting to AI service:** " + e.getMessage() + "\n\n*Falling back to Built-in Engine:*\n\n" +
-                    builtInEngine.generateReply(request.getMessage(), personaId, session.getMessages());
+            replyText = builtInEngine.generateReply(request.getMessage(), personaId, session.getMessages());
             provider = "builtin (fallback)";
         }
 

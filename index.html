@@ -3,22 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NovaAI - Java AI Chatbot Website</title>
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220%22><text y=%2226%22 font-size=%2226%22>⚡</text></svg>">
+    <title>Nova — AI Assistant</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>✦</text></svg>">
     
-    <!-- Google Fonts -->
+    <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     
-    <!-- FontAwesome -->
+    <!-- Icons & Highlighting -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css" id="highlight-theme">
     
-    <!-- Highlight.js for Code Highlighting -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css" id="highlight-theme">
-    
-    <!-- Custom CSS -->
-    <link rel="stylesheet" href="/css/style.css">
+    <!-- Stylesheet -->
+    <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
     <div class="app-layout">
@@ -26,231 +24,185 @@
         <aside class="sidebar" id="sidebar">
             <div class="sidebar-header">
                 <div class="brand">
-                    <div class="brand-icon">⚡</div>
-                    <div class="brand-text">
-                        <h2>NovaAI</h2>
-                        <span class="badge-java">Java 17 • Spring</span>
-                    </div>
+                    <span class="brand-sparkle">✦</span>
+                    <span class="brand-name">Nova</span>
+                    <span class="status-dot" title="Online & Ready"></span>
                 </div>
-                <button class="btn-icon mobile-close-btn" id="closeSidebarBtn" title="Close Sidebar">
+                <button class="btn-icon mobile-only" id="closeSidebarBtn" aria-label="Close sidebar">
                     <i class="fa-solid fa-xmark"></i>
                 </button>
             </div>
 
             <div class="sidebar-actions">
                 <button class="btn-new-chat" id="newChatBtn">
-                    <i class="fa-solid fa-plus"></i> New Conversation
+                    <i class="fa-solid fa-plus"></i>
+                    <span>New chat</span>
                 </button>
             </div>
 
-            <!-- Persona Selector Section -->
-            <div class="sidebar-section">
-                <span class="section-title">AI Persona</span>
-                <div class="persona-list" id="personaList">
-                    <!-- Populated dynamically -->
+            <div class="sidebar-scrollable">
+                <!-- Personas -->
+                <div class="sidebar-group">
+                    <div class="sidebar-group-title">Personas</div>
+                    <div class="persona-list" id="personaList"></div>
                 </div>
-            </div>
 
-            <!-- Conversations History Section -->
-            <div class="sidebar-section chat-history-section">
-                <span class="section-title">Recent Chats</span>
-                <div class="sessions-list" id="sessionsList">
-                    <!-- Populated dynamically -->
+                <!-- Recent Conversations -->
+                <div class="sidebar-group">
+                    <div class="sidebar-group-title">Recent</div>
+                    <div class="sessions-list" id="sessionsList"></div>
                 </div>
             </div>
 
             <!-- Sidebar Footer -->
             <div class="sidebar-footer">
                 <button class="sidebar-btn" id="clearAllBtn" title="Clear all history">
-                    <i class="fa-solid fa-trash-can"></i> Clear History
+                    <i class="fa-regular fa-trash-can"></i>
+                    <span>Clear history</span>
                 </button>
-                <a href="https://github.com/saschool12/java-ai-chatbot" target="_blank" class="sidebar-btn github-link">
-                    <i class="fa-brands fa-github"></i> GitHub Repo
-                </a>
+                <button class="sidebar-btn" id="exportChatBtn" title="Export conversation">
+                    <i class="fa-regular fa-share-from-square"></i>
+                    <span>Export</span>
+                </button>
             </div>
         </aside>
 
         <!-- Sidebar Overlay (Mobile) -->
         <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
-        <!-- Main Chat Container -->
+        <!-- Main Content -->
         <main class="main-content">
-            <!-- Top Navigation Bar -->
+            <!-- Topbar -->
             <header class="topbar">
                 <div class="topbar-left">
-                    <button class="btn-icon mobile-menu-btn" id="openSidebarBtn" title="Toggle Sidebar">
+                    <button class="btn-icon mobile-only" id="openSidebarBtn" aria-label="Open sidebar">
                         <i class="fa-solid fa-bars"></i>
                     </button>
-                    <div class="active-persona-indicator" id="activePersonaBadge">
-                        <span class="persona-icon" id="headerPersonaIcon">🤖</span>
-                        <div>
-                            <span class="persona-name" id="headerPersonaName">General Assistant</span>
-                            <span class="engine-badge" id="headerEngineBadge">Built-in Neural Engine</span>
-                        </div>
+                    <div class="current-persona-badge" id="activePersonaBadge">
+                        <span class="persona-icon-mini" id="headerPersonaIcon">🤖</span>
+                        <span class="persona-name-text" id="headerPersonaName">General Assistant</span>
+                        <span class="model-tag" id="headerEngineBadge">Gemini 3.5 Flash</span>
                     </div>
                 </div>
 
                 <div class="topbar-right">
-                    <button class="btn-icon" id="exportChatBtn" title="Export Conversation">
-                        <i class="fa-solid fa-file-export"></i>
+                    <button class="btn-icon" id="settingsModalBtn" title="Settings" aria-label="Settings">
+                        <i class="fa-solid fa-sliders"></i>
                     </button>
-                    <button class="btn-icon" id="statusModalBtn" title="System Diagnostics">
-                        <i class="fa-solid fa-chart-line"></i>
-                    </button>
-                    <button class="btn-icon" id="settingsModalBtn" title="AI Settings">
-                        <i class="fa-solid fa-gear"></i>
-                    </button>
-                    <button class="btn-icon theme-toggle-btn" id="themeToggleBtn" title="Toggle Light/Dark Theme">
-                        <i class="fa-solid fa-sun" id="themeIcon"></i>
+                    <button class="btn-icon" id="themeToggleBtn" title="Toggle theme" aria-label="Toggle theme">
+                        <i class="fa-solid fa-moon" id="themeIcon"></i>
                     </button>
                 </div>
             </header>
 
-            <!-- Chat Message Feed -->
+            <!-- Chat Scroll Area -->
             <div class="chat-container" id="chatContainer">
-                <!-- Welcome Banner (shown on empty chat) -->
-                <div class="welcome-screen" id="welcomeScreen">
-                    <div class="welcome-badge">🚀 Powered by Java 17 & Spring Boot</div>
-                    <h1>What would you like to explore today?</h1>
-                    <p>Experience an intelligent, responsive Java-backed AI chatbot. Ask anything, generate code, or solve complex problems.</p>
-                    
-                    <div class="starter-cards">
-                        <div class="starter-card" data-prompt="Show me how to build a Spring Boot REST API with clean architecture">
-                            <div class="card-icon">💻</div>
-                            <div class="card-title">Spring Boot REST API</div>
-                            <div class="card-desc">Idiomatic controller with DTOs and best practices</div>
-                        </div>
-                        <div class="starter-card" data-prompt="Explain Quantum Computing and entanglement in simple terms">
-                            <div class="card-icon">⚛️</div>
-                            <div class="card-title">Quantum Computing</div>
-                            <div class="card-desc">Superposition, qubits, and real-world applications</div>
-                        </div>
-                        <div class="starter-card" data-prompt="Implement QuickSort algorithm in Java with step-by-step breakdown">
-                            <div class="card-icon">⚡</div>
-                            <div class="card-title">QuickSort Algorithm</div>
-                            <div class="card-desc">Divide-and-conquer implementation with complexity analysis</div>
-                        </div>
-                        <div class="starter-card" data-prompt="Give me high-impact resume and interview tips for Senior Software Engineers">
-                            <div class="card-icon">💼</div>
-                            <div class="card-title">Career & Interview Prep</div>
-                            <div class="card-desc">STAR method and system design checklist</div>
+                <div class="chat-inner">
+                    <!-- Minimal Welcome Screen -->
+                    <div class="welcome-screen" id="welcomeScreen">
+                        <div class="welcome-sparkle">✦</div>
+                        <h1 class="welcome-heading">How can I help you today?</h1>
+                        
+                        <div class="starter-chips">
+                            <button class="starter-chip" data-prompt="Explain quantum computing in simple, intuitive terms">
+                                <span class="chip-icon">⚛️</span>
+                                <span>Explain quantum computing</span>
+                            </button>
+                            <button class="starter-chip" data-prompt="Write clean, idiomatic Java code for a production REST API controller">
+                                <span class="chip-icon">💻</span>
+                                <span>Write clean Java REST API</span>
+                            </button>
+                            <button class="starter-chip" data-prompt="Give me high-impact resume and system design interview tips for Senior Software Engineers">
+                                <span class="chip-icon">💼</span>
+                                <span>Prep for tech interview</span>
+                            </button>
+                            <button class="starter-chip" data-prompt="Write a short, suspenseful sci-fi story about an AI that woke up">
+                                <span class="chip-icon">✍️</span>
+                                <span>Write a short sci-fi story</span>
+                            </button>
                         </div>
                     </div>
-                </div>
 
-                <div class="messages-list" id="messagesList"></div>
+                    <!-- Messages Feed -->
+                    <div class="messages-list" id="messagesList"></div>
 
-                <!-- Typing Indicator -->
-                <div class="typing-indicator" id="typingIndicator">
-                    <div class="typing-avatar">⚡</div>
-                    <div class="typing-bubble">
-                        <span></span>
-                        <span></span>
-                        <span></span>
+                    <!-- Typing Indicator -->
+                    <div class="typing-indicator" id="typingIndicator">
+                        <div class="typing-avatar">✦</div>
+                        <div class="typing-dots">
+                            <span></span>
+                            <span></span>
+                            <span></span>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Input Area -->
-            <footer class="input-container">
-                <div class="input-wrapper">
-                    <button class="btn-input-action" id="voiceInputBtn" title="Voice Input (Speech-to-Text)">
+            <!-- Minimal Input Area -->
+            <footer class="input-area">
+                <div class="input-capsule">
+                    <button class="btn-action-mic" id="voiceInputBtn" title="Voice input" aria-label="Voice input">
                         <i class="fa-solid fa-microphone" id="micIcon"></i>
                     </button>
                     <textarea 
                         id="chatInput" 
-                        placeholder="Message NovaAI... (Press Enter to send, Shift+Enter for new line)" 
+                        placeholder="Message Nova..." 
                         rows="1"
+                        autofocus
                     ></textarea>
-                    <button class="btn-send" id="sendBtn" title="Send message" disabled>
+                    <button class="btn-send" id="sendBtn" title="Send message" disabled aria-label="Send">
                         <i class="fa-solid fa-arrow-up"></i>
                     </button>
                 </div>
-                <div class="input-meta">
-                    <span>NovaAI Java Platform • Java 17 + Spring Boot 3</span>
-                    <span id="charCounter">0 / 2000</span>
+                <div class="input-disclaimer">
+                    Nova can make mistakes. Verify important info.
                 </div>
             </footer>
         </main>
     </div>
 
-    <!-- Settings Modal -->
+    <!-- Minimal Settings Modal -->
     <div class="modal" id="settingsModal">
         <div class="modal-card">
             <div class="modal-header">
-                <h3><i class="fa-solid fa-gear"></i> AI Engine Settings</h3>
+                <h3>Settings</h3>
                 <button class="btn-icon" id="closeSettingsModal"><i class="fa-solid fa-xmark"></i></button>
             </div>
             <div class="modal-body">
                 <div class="form-group">
-                    <label for="providerSelect">AI Provider</label>
+                    <label for="providerSelect">Model Provider</label>
                     <select id="providerSelect" class="form-control">
-                        <option value="builtin">🧠 Built-in Neural Engine (Free, Offline, No Key Needed)</option>
-                        <option value="openai">🌐 OpenAI Compatible (GPT-4o, GPT-3.5, Groq, Ollama)</option>
-                        <option value="gemini">✨ Google Gemini API</option>
+                        <option value="gemini">Google Gemini (Gemini 3.5 Flash — Default)</option>
+                        <option value="builtin">Nova Smart Engine (Free, No Key Needed)</option>
+                        <option value="openai">OpenAI (GPT-4o, GPT-3.5)</option>
                     </select>
                 </div>
 
-                <div class="form-group" id="apiKeyGroup" style="display: none;">
+                <div class="form-group" id="apiKeyGroup">
                     <label for="apiKeyInput">API Key</label>
                     <div class="password-wrapper">
-                        <input type="password" id="apiKeyInput" class="form-control" placeholder="sk-... or Gemini API Key">
+                        <input type="password" id="apiKeyInput" class="form-control" placeholder="API key...">
                         <button type="button" class="btn-eye" id="toggleApiKeyVisibility"><i class="fa-solid fa-eye"></i></button>
                     </div>
-                    <small class="form-hint">Stored strictly in your local browser storage. Never exposed or logged.</small>
+                    <small class="form-hint">Stored safely in your browser's local storage.</small>
                 </div>
 
-                <div class="form-group" id="modelGroup" style="display: none;">
+                <div class="form-group" id="modelGroup">
                     <label for="modelInput">Model Name</label>
-                    <input type="text" id="modelInput" class="form-control" placeholder="gpt-4o-mini or gemini-1.5-flash">
+                    <input type="text" id="modelInput" class="form-control" placeholder="gemini-3.5-flash or gpt-4o-mini">
                 </div>
 
                 <div class="form-group">
-                    <label for="tempSlider">Creativity / Temperature: <span id="tempValue">0.7</span></label>
+                    <div class="slider-header">
+                        <label for="tempSlider">Creativity / Temperature</label>
+                        <span id="tempValue" class="temp-badge">0.7</span>
+                    </div>
                     <input type="range" id="tempSlider" min="0" max="1" step="0.1" value="0.7">
                 </div>
             </div>
             <div class="modal-footer">
-                <button class="btn-secondary" id="resetSettingsBtn">Reset Defaults</button>
-                <button class="btn-primary" id="saveSettingsBtn">Save Settings</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- System Diagnostics Modal -->
-    <div class="modal" id="statusModal">
-        <div class="modal-card">
-            <div class="modal-header">
-                <h3><i class="fa-solid fa-chart-line"></i> System Diagnostics</h3>
-                <button class="btn-icon" id="closeStatusModal"><i class="fa-solid fa-xmark"></i></button>
-            </div>
-            <div class="modal-body" id="statusModalBody">
-                <div class="diag-grid">
-                    <div class="diag-card">
-                        <span class="diag-label">Application</span>
-                        <span class="diag-val" id="diagAppName">NovaAI Chatbot</span>
-                    </div>
-                    <div class="diag-card">
-                        <span class="diag-label">Java Version</span>
-                        <span class="diag-val" id="diagJavaVersion">17</span>
-                    </div>
-                    <div class="diag-card">
-                        <span class="diag-label">Used JVM Memory</span>
-                        <span class="diag-val" id="diagMemory">-- MB</span>
-                    </div>
-                    <div class="diag-card">
-                        <span class="diag-label">Uptime</span>
-                        <span class="diag-val" id="diagUptime">-- s</span>
-                    </div>
-                    <div class="diag-card">
-                        <span class="diag-label">Active Sessions</span>
-                        <span class="diag-val" id="diagSessions">0</span>
-                    </div>
-                    <div class="diag-card">
-                        <span class="diag-label">Available Personas</span>
-                        <span class="diag-val" id="diagPersonas">5</span>
-                    </div>
-                </div>
+                <button class="btn-secondary" id="resetSettingsBtn">Reset</button>
+                <button class="btn-primary" id="saveSettingsBtn">Save</button>
             </div>
         </div>
     </div>
@@ -259,17 +211,24 @@
     <div class="modal" id="exportModal">
         <div class="modal-card">
             <div class="modal-header">
-                <h3><i class="fa-solid fa-file-export"></i> Export Chat</h3>
+                <h3>Export Conversation</h3>
                 <button class="btn-icon" id="closeExportModal"><i class="fa-solid fa-xmark"></i></button>
             </div>
             <div class="modal-body">
-                <p>Choose an export format for your current conversation:</p>
                 <div class="export-options">
                     <button class="btn-export-option" id="exportMarkdownBtn">
-                        <i class="fa-brands fa-markdown"></i> Markdown (.md)
+                        <i class="fa-brands fa-markdown"></i>
+                        <div>
+                            <strong>Markdown</strong>
+                            <span>Readable text formatted as .md</span>
+                        </div>
                     </button>
                     <button class="btn-export-option" id="exportJsonBtn">
-                        <i class="fa-solid fa-code"></i> JSON (.json)
+                        <i class="fa-solid fa-code"></i>
+                        <div>
+                            <strong>JSON</strong>
+                            <span>Full structured session data</span>
+                        </div>
                     </button>
                 </div>
             </div>
@@ -279,6 +238,6 @@
     <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
-    <script src="/js/app.js"></script>
+    <script src="js/app.js"></script>
 </body>
 </html>

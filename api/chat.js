@@ -1,8 +1,82 @@
 const { getOrCreateSession, addMessage, generateReply, PERSONAS } = require('./_store');
+const DEFAULT_GEMINI_KEY = process.env.GEMINI_API_KEY || '';
 
 function estimateTokens(text) {
   if (!text) return 0;
   return Math.ceil(text.length / 4);
+}
+
+async function callGemini(apiKey, model, systemPrompt, history, userMessage) {
+  const modelsToTry = [model || 'gemini-3.5-flash', 'gemini-flash-lite-latest', 'gemini-3.1-flash-lite'];
+  
+  for (const mod of modelsToTry) {
+    try {
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${mod}:generateContent?key=${apiKey}`;
+      const contents = [];
+      const recent = (history || []).slice(-6);
+      for (const m of recent) {
+        contents.push({
+          role: m.role === 'user' ? 'user' : 'model',
+          parts: [{ text: m.content }]
+        });
+      }
+      contents.push({
+        role: 'user',
+        parts: [{ text: userMessage }]
+      });
+
+      const body = {
+        contents: contents,
+        system_instruction: {
+          parts: [{ text: `${systemPrompt}\n\nTone: Intelligent, natural, insightful, and formatted with clean markdown.` }]
+        }
+      };
+
+      const resp = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+
+      if (!resp.ok) continue;
+      const data = await resp.json();
+      const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+      if (text) return text;
+    } catch (e) {
+      // try next model
+    }
+  }
+  return null;
+}
+
+async function callFreeLlm(messages, systemPrompt) {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 10000);
+  try {
+    const formattedMessages = [
+      { role: 'system', content: `${systemPrompt}\n\nFormatting: Use clean, concise, modern markdown. Be direct, intelligent, and insightful.` },
+      ...messages.slice(-6).map(m => ({ role: m.role, content: m.content }))
+    ];
+
+    const resp = await fetch('https://text.pollinations.ai/openai', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        messages: formattedMessages,
+        model: 'openai',
+        temperature: 0.7
+      }),
+      signal: controller.signal
+    });
+
+    clearTimeout(timeoutId);
+    if (!resp.ok) return null;
+    const data = await resp.json();
+    return data.choices?.[0]?.message?.content || null;
+  } catch (err) {
+    clearTimeout(timeoutId);
+    return null;
+  }
 }
 
 module.exports = async (req, res) => {
@@ -32,26 +106,27 @@ module.exports = async (req, res) => {
   }
 
   const personaId = body.persona || 'general';
+  const personaObj = PERSONAS.find(p => p.id === personaId) || PERSONAS[0];
   const session = getOrCreateSession(body.sessionId, personaId);
   const sessionId = session.id;
 
   // Add user message
   const userTokens = estimateTokens(message);
-  addMessage(sessionId, {
+  const userMsg = {
     role: 'user',
     content: message,
     tokens: userTokens,
     latencyMs: 0,
     timestamp: new Date().toISOString()
-  });
+  };
+  addMessage(sessionId, userMsg);
 
-  let provider = (body.provider || 'builtin').toLowerCase();
-  let model = body.model || 'neural-expert-v1';
+  let provider = (body.provider || 'gemini').toLowerCase();
+  let model = body.model || 'gemini-3.5-flash';
   let replyText = null;
 
   try {
     if (provider === 'openai' && body.apiKey) {
-      const personaObj = PERSONAS.find(p => p.id === personaId) || PERSONAS[0];
       const messages = [
         { role: 'system', content: personaObj.systemPrompt },
         ...session.messages.slice(-8).map(m => ({ role: m.role, content: m.content })),
@@ -65,48 +140,48 @@ module.exports = async (req, res) => {
           'Authorization': `Bearer ${body.apiKey}`
         },
         body: JSON.stringify({
-          model: model || 'gpt-4o-mini',
+          model: body.model || 'gpt-4o-mini',
           messages: messages,
           temperature: body.temperature || 0.7
         })
       });
 
-      if (!resp.ok) {
-        const err = await resp.json().catch(() => ({}));
-        throw new Error(err.error?.message || `OpenAI returned HTTP ${resp.status}`);
+      if (resp.ok) {
+        const data = await resp.json();
+        replyText = data.choices?.[0]?.message?.content;
       }
+    }
 
-      const data = await resp.json();
-      replyText = data.choices?.[0]?.message?.content || 'No response from OpenAI.';
-    } else if (provider === 'gemini' && body.apiKey) {
-      const geminiModel = model || 'gemini-1.5-flash';
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/${geminiModel}:generateContent?key=${body.apiKey}`;
-      const personaObj = PERSONAS.find(p => p.id === personaId) || PERSONAS[0];
-      
-      const prompt = `${personaObj.systemPrompt}\n\nUser: ${message}`;
-      const resp = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }]
-        })
-      });
-
-      if (!resp.ok) {
-        const err = await resp.json().catch(() => ({}));
-        throw new Error(err.error?.message || `Gemini returned HTTP ${resp.status}`);
+    if (!replyText) {
+      // Primary: Google Gemini 3.5 Flash
+      const geminiKey = body.apiKey && body.apiKey.startsWith('AQ.') ? body.apiKey : DEFAULT_GEMINI_KEY;
+      replyText = await callGemini(geminiKey, model, personaObj.systemPrompt, session.messages, message);
+      if (replyText) {
+        provider = 'gemini';
+        model = 'gemini-3.5-flash';
       }
+    }
 
-      const data = await resp.json();
-      replyText = data.candidates?.[0]?.content?.parts?.[0]?.text || 'No response from Gemini.';
-    } else {
-      provider = 'builtin';
-      model = 'Nova-Neural-v1';
+    if (!replyText) {
+      // Secondary: Free OpenAI-compatible LLM
+      const historyWithNew = [...session.messages.slice(-6), userMsg];
+      replyText = await callFreeLlm(historyWithNew, personaObj.systemPrompt);
+      if (replyText) {
+        provider = 'nova-llm';
+        model = 'gpt-oss-20b';
+      }
+    }
+
+    if (!replyText) {
+      // Tertiary: Built-in local rule engine
       replyText = generateReply(message, personaId);
+      provider = 'builtin';
+      model = 'Nova-Neural-Fallback';
     }
   } catch (err) {
-    replyText = `⚠️ **Error connecting to AI service:** ${err.message}\n\n*Falling back to Built-in Engine:*\n\n${generateReply(message, personaId)}`;
-    provider = 'builtin (fallback)';
+    replyText = generateReply(message, personaId);
+    provider = 'builtin';
+    model = 'Nova-Neural-Fallback';
   }
 
   const latencyMs = Date.now() - startTime;

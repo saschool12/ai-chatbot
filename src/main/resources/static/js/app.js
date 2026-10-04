@@ -1,11 +1,13 @@
 document.addEventListener('DOMContentLoaded', () => {
+    const DEFAULT_KEY = '';
+
     // State
     const state = {
         sessionId: localStorage.getItem('nova_session_id') || null,
         persona: localStorage.getItem('nova_persona') || 'general',
-        provider: localStorage.getItem('nova_provider') || 'builtin',
-        apiKey: localStorage.getItem('nova_api_key') || '',
-        model: localStorage.getItem('nova_model') || '',
+        provider: localStorage.getItem('nova_provider') || 'gemini',
+        apiKey: localStorage.getItem('nova_api_key') || DEFAULT_KEY,
+        model: localStorage.getItem('nova_model') || 'gemini-3.5-flash',
         temperature: parseFloat(localStorage.getItem('nova_temperature') || '0.7'),
         theme: localStorage.getItem('nova_theme') || 'dark',
         personas: [],
@@ -38,11 +40,10 @@ document.addEventListener('DOMContentLoaded', () => {
         
         chatInput: document.getElementById('chatInput'),
         sendBtn: document.getElementById('sendBtn'),
-        charCounter: document.getElementById('charCounter'),
         voiceInputBtn: document.getElementById('voiceInputBtn'),
         micIcon: document.getElementById('micIcon'),
         
-        // Modals
+        // Settings Modal
         settingsModal: document.getElementById('settingsModal'),
         settingsModalBtn: document.getElementById('settingsModalBtn'),
         closeSettingsModal: document.getElementById('closeSettingsModal'),
@@ -57,16 +58,7 @@ document.addEventListener('DOMContentLoaded', () => {
         saveSettingsBtn: document.getElementById('saveSettingsBtn'),
         resetSettingsBtn: document.getElementById('resetSettingsBtn'),
         
-        statusModal: document.getElementById('statusModal'),
-        statusModalBtn: document.getElementById('statusModalBtn'),
-        closeStatusModal: document.getElementById('closeStatusModal'),
-        diagAppName: document.getElementById('diagAppName'),
-        diagJavaVersion: document.getElementById('diagJavaVersion'),
-        diagMemory: document.getElementById('diagMemory'),
-        diagUptime: document.getElementById('diagUptime'),
-        diagSessions: document.getElementById('diagSessions'),
-        diagPersonas: document.getElementById('diagPersonas'),
-        
+        // Export Modal
         exportModal: document.getElementById('exportModal'),
         exportChatBtn: document.getElementById('exportChatBtn'),
         closeExportModal: document.getElementById('closeExportModal'),
@@ -93,35 +85,37 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Apply Initial Theme
+    // Theme Management
     function applyTheme(theme) {
         document.documentElement.setAttribute('data-theme', theme);
         state.theme = theme;
         localStorage.setItem('nova_theme', theme);
-        if (theme === 'light') {
-            elements.themeIcon.className = 'fa-solid fa-moon';
-        } else {
-            elements.themeIcon.className = 'fa-solid fa-sun';
+        if (elements.themeIcon) {
+            elements.themeIcon.className = theme === 'light' ? 'fa-solid fa-moon' : 'fa-solid fa-sun';
         }
     }
     applyTheme(state.theme);
 
-    elements.themeToggleBtn.addEventListener('click', () => {
-        applyTheme(state.theme === 'dark' ? 'light' : 'dark');
-    });
+    if (elements.themeToggleBtn) {
+        elements.themeToggleBtn.addEventListener('click', () => {
+            applyTheme(state.theme === 'dark' ? 'light' : 'dark');
+        });
+    }
 
     // Mobile Sidebar
-    elements.openSidebarBtn.addEventListener('click', () => {
-        elements.sidebar.classList.add('open');
-        elements.sidebarOverlay.classList.add('show');
-    });
+    if (elements.openSidebarBtn) {
+        elements.openSidebarBtn.addEventListener('click', () => {
+            elements.sidebar?.classList.add('open');
+            elements.sidebarOverlay?.classList.add('show');
+        });
+    }
 
     const closeSidebar = () => {
-        elements.sidebar.classList.remove('open');
-        elements.sidebarOverlay.classList.remove('show');
+        elements.sidebar?.classList.remove('open');
+        elements.sidebarOverlay?.classList.remove('show');
     };
-    elements.closeSidebarBtn.addEventListener('click', closeSidebar);
-    elements.sidebarOverlay.addEventListener('click', closeSidebar);
+    if (elements.closeSidebarBtn) elements.closeSidebarBtn.addEventListener('click', closeSidebar);
+    if (elements.sidebarOverlay) elements.sidebarOverlay.addEventListener('click', closeSidebar);
 
     // Update Header Badges
     function updateHeaderInfo() {
@@ -129,15 +123,17 @@ document.addEventListener('DOMContentLoaded', () => {
             name: 'General Assistant',
             icon: '🤖'
         };
-        elements.headerPersonaIcon.textContent = persona.icon;
-        elements.headerPersonaName.textContent = persona.name;
+        if (elements.headerPersonaIcon) elements.headerPersonaIcon.textContent = persona.icon;
+        if (elements.headerPersonaName) elements.headerPersonaName.textContent = persona.name;
 
-        if (state.provider === 'openai') {
-            elements.headerEngineBadge.textContent = 'OpenAI: ' + (state.model || 'gpt-4o-mini');
-        } else if (state.provider === 'gemini') {
-            elements.headerEngineBadge.textContent = 'Gemini: ' + (state.model || 'gemini-1.5-flash');
-        } else {
-            elements.headerEngineBadge.textContent = 'Built-in Neural Engine';
+        if (elements.headerEngineBadge) {
+            if (state.provider === 'gemini') {
+                elements.headerEngineBadge.textContent = 'Gemini 3.5 Flash';
+            } else if (state.provider === 'openai') {
+                elements.headerEngineBadge.textContent = 'OpenAI: ' + (state.model || 'gpt-4o-mini');
+            } else {
+                elements.headerEngineBadge.textContent = 'Nova Smart';
+            }
         }
     }
 
@@ -155,6 +151,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function renderPersonas() {
+        if (!elements.personaList) return;
         elements.personaList.innerHTML = '';
         state.personas.forEach(p => {
             const btn = document.createElement('button');
@@ -175,7 +172,6 @@ document.addEventListener('DOMContentLoaded', () => {
         localStorage.setItem('nova_persona', personaId);
         renderPersonas();
         updateHeaderInfo();
-        // Start fresh conversation with this persona
         createNewChat();
     }
 
@@ -192,9 +188,10 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function renderSessions(sessions) {
+        if (!elements.sessionsList) return;
         elements.sessionsList.innerHTML = '';
-        if (sessions.length === 0) {
-            elements.sessionsList.innerHTML = '<span style="font-size:0.75rem; color:var(--text-muted); padding: 0.5rem 0.75rem;">No recent chats</span>';
+        if (!sessions || sessions.length === 0) {
+            elements.sessionsList.innerHTML = '<span style="font-size:0.75rem; color:var(--text-muted); padding: 0.5rem 0.6rem;">No recent chats</span>';
             return;
         }
 
@@ -202,7 +199,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const div = document.createElement('div');
             div.className = `session-item ${sess.id === state.sessionId ? 'active' : ''}`;
             div.innerHTML = `
-                <span class="session-title"><i class="fa-regular fa-message" style="margin-right: 6px; font-size:0.75rem;"></i>${escapeHtml(sess.title)}</span>
+                <span class="session-title">${escapeHtml(sess.title)}</span>
                 <button class="btn-delete-session" title="Delete conversation"><i class="fa-solid fa-xmark"></i></button>
             `;
 
@@ -270,7 +267,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     async function clearAllSessions() {
-        if (!confirm('Are you sure you want to clear all conversation history?')) return;
+        if (!confirm('Clear all conversation history?')) return;
         try {
             await fetch('/api/clear', { method: 'POST' });
             createNewChat();
@@ -282,31 +279,31 @@ document.addEventListener('DOMContentLoaded', () => {
     // Render Messages Feed
     function renderMessages(messages) {
         state.currentMessages = messages || [];
+        if (!elements.messagesList) return;
         elements.messagesList.innerHTML = '';
 
         if (!messages || messages.length === 0) {
-            elements.welcomeScreen.style.display = 'flex';
+            if (elements.welcomeScreen) elements.welcomeScreen.style.display = 'flex';
         } else {
-            elements.welcomeScreen.style.display = 'none';
+            if (elements.welcomeScreen) elements.welcomeScreen.style.display = 'none';
             messages.forEach(msg => appendMessageToFeed(msg, false));
             scrollToBottom();
         }
     }
 
     function appendMessageToFeed(msg, scroll = true) {
-        elements.welcomeScreen.style.display = 'none';
+        if (elements.welcomeScreen) elements.welcomeScreen.style.display = 'none';
         const item = document.createElement('div');
         item.className = `message-item ${msg.role}`;
 
         const isUser = msg.role === 'user';
-        const avatar = isUser ? '<i class="fa-solid fa-user"></i>' : (state.personas.find(p => p.id === state.persona)?.icon || '⚡');
+        const avatar = isUser ? '' : `<span style="font-size:0.9rem;">✦</span>`;
 
         let formattedContent = '';
         if (isUser) {
             formattedContent = `<p>${escapeHtml(msg.content).replace(/\n/g, '<br>')}</p>`;
         } else {
-            // Assistant reply parsed as markdown
-            formattedContent = marked.parse(msg.content);
+            formattedContent = window.marked ? marked.parse(msg.content) : `<p>${escapeHtml(msg.content)}</p>`;
         }
 
         const metaTokens = msg.tokens ? `${msg.tokens} tokens` : '';
@@ -314,13 +311,13 @@ document.addEventListener('DOMContentLoaded', () => {
         const metaHtml = !isUser ? `
             <div class="message-meta">
                 <span>${metaTokens}${metaLatency}</span>
-                <button class="btn-meta-action btn-copy-msg" title="Copy full response"><i class="fa-regular fa-copy"></i></button>
+                <button class="btn-meta-action btn-copy-msg" title="Copy response"><i class="fa-regular fa-copy"></i></button>
                 <button class="btn-meta-action btn-speak-msg" title="Read aloud"><i class="fa-solid fa-volume-high"></i></button>
             </div>
         ` : '';
 
         item.innerHTML = `
-            <div class="message-avatar">${avatar}</div>
+            ${!isUser ? `<div class="message-avatar">${avatar}</div>` : ''}
             <div class="message-content-wrapper">
                 <div class="message-bubble">${formattedContent}</div>
                 ${metaHtml}
@@ -358,7 +355,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 wrapper.appendChild(pre);
             });
 
-            // Action: Copy full message
             const copyMsgBtn = item.querySelector('.btn-copy-msg');
             if (copyMsgBtn) {
                 copyMsgBtn.addEventListener('click', () => {
@@ -368,7 +364,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
             }
 
-            // Action: Text to Speech
             const speakBtn = item.querySelector('.btn-speak-msg');
             if (speakBtn) {
                 speakBtn.addEventListener('click', () => {
@@ -382,7 +377,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function scrollToBottom() {
-        elements.chatContainer.scrollTop = elements.chatContainer.scrollHeight;
+        if (elements.chatContainer) {
+            elements.chatContainer.scrollTop = elements.chatContainer.scrollHeight;
+        }
     }
 
     // Text to Speech
@@ -398,28 +395,21 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        // Clean markdown tags for clean audio speech
         const plainText = text.replace(/```[\s\S]*?```/g, 'Code block omitted.')
                               .replace(/[#*_`>~-]/g, '')
                               .trim();
 
         const utterance = new SpeechSynthesisUtterance(plainText);
         utterance.rate = 1.0;
-        utterance.pitch = 1.0;
-
         btn.innerHTML = '<i class="fa-solid fa-stop"></i>';
 
-        utterance.onend = () => {
-            btn.innerHTML = '<i class="fa-solid fa-volume-high"></i>';
-        };
-        utterance.onerror = () => {
-            btn.innerHTML = '<i class="fa-solid fa-volume-high"></i>';
-        };
+        utterance.onend = () => { btn.innerHTML = '<i class="fa-solid fa-volume-high"></i>'; };
+        utterance.onerror = () => { btn.innerHTML = '<i class="fa-solid fa-volume-high"></i>'; };
 
         window.speechSynthesis.speak(utterance);
     }
 
-    // Speech to Text (Microphone)
+    // Speech to Text
     if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
         const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
         const recognition = new SpeechRec();
@@ -429,54 +419,57 @@ document.addEventListener('DOMContentLoaded', () => {
 
         recognition.onstart = () => {
             state.isRecording = true;
-            elements.voiceInputBtn.classList.add('recording');
+            elements.voiceInputBtn?.classList.add('recording');
         };
 
         recognition.onresult = (event) => {
             const transcript = event.results[0][0].transcript;
-            elements.chatInput.value += (elements.chatInput.value ? ' ' : '') + transcript;
-            handleInputChange();
+            if (elements.chatInput) {
+                elements.chatInput.value += (elements.chatInput.value ? ' ' : '') + transcript;
+                handleInputChange();
+            }
         };
 
         recognition.onend = () => {
             state.isRecording = false;
-            elements.voiceInputBtn.classList.remove('recording');
+            elements.voiceInputBtn?.classList.remove('recording');
         };
 
-        recognition.onerror = (e) => {
-            console.error('Speech recognition error:', e);
+        recognition.onerror = () => {
             state.isRecording = false;
-            elements.voiceInputBtn.classList.remove('recording');
+            elements.voiceInputBtn?.classList.remove('recording');
         };
 
-        elements.voiceInputBtn.addEventListener('click', () => {
+        elements.voiceInputBtn?.addEventListener('click', () => {
             if (state.isRecording) {
                 recognition.stop();
             } else {
                 recognition.start();
             }
         });
-    } else {
+    } else if (elements.voiceInputBtn) {
         elements.voiceInputBtn.style.display = 'none';
     }
 
     // Send Message
     async function sendMessage(customPrompt) {
-        const text = customPrompt || elements.chatInput.value.trim();
+        const text = customPrompt || (elements.chatInput ? elements.chatInput.value.trim() : '');
         if (!text || state.isGenerating) return;
 
         state.isGenerating = true;
-        elements.chatInput.value = '';
-        elements.chatInput.style.height = 'auto';
-        handleInputChange();
+        if (elements.chatInput) {
+            elements.chatInput.value = '';
+            elements.chatInput.style.height = 'auto';
+            handleInputChange();
+        }
 
-        // 1. Add User Message
+        // User Message
         const userMsg = { role: 'user', content: text, timestamp: new Date().toISOString() };
         appendMessageToFeed(userMsg);
         state.currentMessages.push(userMsg);
 
-        // 2. Show Typing Indicator
-        elements.typingIndicator.style.display = 'flex';
+        // Typing Indicator
+        if (elements.typingIndicator) elements.typingIndicator.style.display = 'flex';
         scrollToBottom();
 
         try {
@@ -505,7 +498,6 @@ document.addEventListener('DOMContentLoaded', () => {
             state.sessionId = data.sessionId;
             localStorage.setItem('nova_session_id', data.sessionId);
 
-            // 3. Add Assistant Message
             const assistantMsg = {
                 role: 'assistant',
                 content: data.reply,
@@ -516,7 +508,6 @@ document.addEventListener('DOMContentLoaded', () => {
             appendMessageToFeed(assistantMsg);
             state.currentMessages.push(assistantMsg);
 
-            // Refresh recent chat titles
             loadSessions();
         } catch (err) {
             const errorMsg = {
@@ -528,167 +519,167 @@ document.addEventListener('DOMContentLoaded', () => {
             appendMessageToFeed(errorMsg);
         } finally {
             state.isGenerating = false;
-            elements.typingIndicator.style.display = 'none';
+            if (elements.typingIndicator) elements.typingIndicator.style.display = 'none';
             scrollToBottom();
-            elements.chatInput.focus();
+            elements.chatInput?.focus();
         }
     }
 
     // Input handlers
     function handleInputChange() {
-        const len = elements.chatInput.value.length;
-        elements.charCounter.textContent = `${len} / 2000`;
+        if (!elements.chatInput || !elements.sendBtn) return;
+        const len = elements.chatInput.value.trim().length;
         elements.sendBtn.disabled = len === 0;
 
-        // Auto resize height
         elements.chatInput.style.height = 'auto';
-        elements.chatInput.style.height = `${Math.min(elements.chatInput.scrollHeight, 180)}px`;
+        elements.chatInput.style.height = `${Math.min(elements.chatInput.scrollHeight, 160)}px`;
     }
 
-    elements.chatInput.addEventListener('input', handleInputChange);
+    if (elements.chatInput) {
+        elements.chatInput.addEventListener('input', handleInputChange);
+        elements.chatInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+    }
 
-    elements.chatInput.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter' && !e.shiftKey) {
-            e.preventDefault();
-            sendMessage();
-        }
-    });
+    if (elements.sendBtn) {
+        elements.sendBtn.addEventListener('click', () => sendMessage());
+    }
 
-    elements.sendBtn.addEventListener('click', () => sendMessage());
-
-    // Starter Prompt Cards
-    document.querySelectorAll('.starter-card').forEach(card => {
+    // Starter Prompt Chips
+    document.querySelectorAll('.starter-chip').forEach(card => {
         card.addEventListener('click', () => {
             const prompt = card.getAttribute('data-prompt');
             sendMessage(prompt);
         });
     });
 
-    // Top action buttons
-    elements.newChatBtn.addEventListener('click', createNewChat);
-    elements.clearAllBtn.addEventListener('click', clearAllSessions);
+    if (elements.newChatBtn) elements.newChatBtn.addEventListener('click', createNewChat);
+    if (elements.clearAllBtn) elements.clearAllBtn.addEventListener('click', clearAllSessions);
 
     // Settings Modal
-    elements.settingsModalBtn.addEventListener('click', () => {
-        elements.providerSelect.value = state.provider;
-        elements.apiKeyInput.value = state.apiKey;
-        elements.modelInput.value = state.model;
-        elements.tempSlider.value = state.temperature;
-        elements.tempValue.textContent = state.temperature;
-        updateSettingsVisibility();
-        elements.settingsModal.classList.add('show');
-    });
-
-    elements.closeSettingsModal.addEventListener('click', () => {
-        elements.settingsModal.classList.remove('show');
-    });
-
-    function updateSettingsVisibility() {
-        const val = elements.providerSelect.value;
-        const needsKey = val === 'openai' || val === 'gemini';
-        elements.apiKeyGroup.style.display = needsKey ? 'flex' : 'none';
-        elements.modelGroup.style.display = needsKey ? 'flex' : 'none';
+    if (elements.settingsModalBtn) {
+        elements.settingsModalBtn.addEventListener('click', () => {
+            if (elements.providerSelect) elements.providerSelect.value = state.provider;
+            if (elements.apiKeyInput) elements.apiKeyInput.value = state.apiKey;
+            if (elements.modelInput) elements.modelInput.value = state.model;
+            if (elements.tempSlider) elements.tempSlider.value = state.temperature;
+            if (elements.tempValue) elements.tempValue.textContent = state.temperature;
+            updateSettingsVisibility();
+            elements.settingsModal?.classList.add('show');
+        });
     }
 
-    elements.providerSelect.addEventListener('change', updateSettingsVisibility);
+    if (elements.closeSettingsModal) {
+        elements.closeSettingsModal.addEventListener('click', () => {
+            elements.settingsModal?.classList.remove('show');
+        });
+    }
 
-    elements.tempSlider.addEventListener('input', (e) => {
-        elements.tempValue.textContent = e.target.value;
-    });
+    function updateSettingsVisibility() {
+        const val = elements.providerSelect?.value;
+        const needsKey = val === 'openai' || val === 'gemini';
+        if (elements.apiKeyGroup) elements.apiKeyGroup.style.display = needsKey ? 'flex' : 'none';
+        if (elements.modelGroup) elements.modelGroup.style.display = needsKey ? 'flex' : 'none';
+    }
 
-    elements.toggleApiKeyVisibility.addEventListener('click', () => {
-        const isPassword = elements.apiKeyInput.type === 'password';
-        elements.apiKeyInput.type = isPassword ? 'text' : 'password';
-        elements.toggleApiKeyVisibility.innerHTML = isPassword ? '<i class="fa-solid fa-eye-slash"></i>' : '<i class="fa-solid fa-eye"></i>';
-    });
+    if (elements.providerSelect) {
+        elements.providerSelect.addEventListener('change', updateSettingsVisibility);
+    }
 
-    elements.saveSettingsBtn.addEventListener('click', () => {
-        state.provider = elements.providerSelect.value;
-        state.apiKey = elements.apiKeyInput.value.trim();
-        state.model = elements.modelInput.value.trim();
-        state.temperature = parseFloat(elements.tempSlider.value);
+    if (elements.tempSlider && elements.tempValue) {
+        elements.tempSlider.addEventListener('input', (e) => {
+            elements.tempValue.textContent = e.target.value;
+        });
+    }
 
-        localStorage.setItem('nova_provider', state.provider);
-        localStorage.setItem('nova_api_key', state.apiKey);
-        localStorage.setItem('nova_model', state.model);
-        localStorage.setItem('nova_temperature', state.temperature);
+    if (elements.toggleApiKeyVisibility && elements.apiKeyInput) {
+        elements.toggleApiKeyVisibility.addEventListener('click', () => {
+            const isPassword = elements.apiKeyInput.type === 'password';
+            elements.apiKeyInput.type = isPassword ? 'text' : 'password';
+            elements.toggleApiKeyVisibility.innerHTML = isPassword ? '<i class="fa-solid fa-eye-slash"></i>' : '<i class="fa-solid fa-eye"></i>';
+        });
+    }
 
-        updateHeaderInfo();
-        elements.settingsModal.classList.remove('show');
-    });
+    if (elements.saveSettingsBtn) {
+        elements.saveSettingsBtn.addEventListener('click', () => {
+            state.provider = elements.providerSelect.value;
+            state.apiKey = elements.apiKeyInput.value.trim() || DEFAULT_KEY;
+            state.model = elements.modelInput.value.trim() || (state.provider === 'gemini' ? 'gemini-3.5-flash' : 'gpt-4o-mini');
+            state.temperature = parseFloat(elements.tempSlider.value);
 
-    elements.resetSettingsBtn.addEventListener('click', () => {
-        state.provider = 'builtin';
-        state.apiKey = '';
-        state.model = '';
-        state.temperature = 0.7;
+            localStorage.setItem('nova_provider', state.provider);
+            localStorage.setItem('nova_api_key', state.apiKey);
+            localStorage.setItem('nova_model', state.model);
+            localStorage.setItem('nova_temperature', state.temperature);
 
-        localStorage.removeItem('nova_provider');
-        localStorage.removeItem('nova_api_key');
-        localStorage.removeItem('nova_model');
-        localStorage.removeItem('nova_temperature');
+            updateHeaderInfo();
+            elements.settingsModal?.classList.remove('show');
+        });
+    }
 
-        elements.providerSelect.value = 'builtin';
-        elements.apiKeyInput.value = '';
-        elements.modelInput.value = '';
-        elements.tempSlider.value = 0.7;
-        elements.tempValue.textContent = '0.7';
-        updateSettingsVisibility();
-        updateHeaderInfo();
-    });
+    if (elements.resetSettingsBtn) {
+        elements.resetSettingsBtn.addEventListener('click', () => {
+            state.provider = 'gemini';
+            state.apiKey = DEFAULT_KEY;
+            state.model = 'gemini-3.5-flash';
+            state.temperature = 0.7;
 
-    // Status / Diagnostics Modal
-    elements.statusModalBtn.addEventListener('click', async () => {
-        try {
-            const res = await fetch('/api/status');
-            if (res.ok) {
-                const data = await res.json();
-                elements.diagAppName.textContent = data.application + ' v' + data.version;
-                elements.diagJavaVersion.textContent = data.javaVersion;
-                elements.diagMemory.textContent = `${data.usedMemoryMb} MB / ${data.totalMemoryMb} MB`;
-                elements.diagUptime.textContent = `${data.uptimeSeconds}s`;
-                elements.diagSessions.textContent = data.activeSessions;
-                elements.diagPersonas.textContent = data.availablePersonas;
-            }
-        } catch (err) {
-            console.error(err);
-        }
-        elements.statusModal.classList.add('show');
-    });
+            localStorage.removeItem('nova_provider');
+            localStorage.removeItem('nova_api_key');
+            localStorage.removeItem('nova_model');
+            localStorage.removeItem('nova_temperature');
 
-    elements.closeStatusModal.addEventListener('click', () => {
-        elements.statusModal.classList.remove('show');
-    });
+            if (elements.providerSelect) elements.providerSelect.value = 'gemini';
+            if (elements.apiKeyInput) elements.apiKeyInput.value = DEFAULT_KEY;
+            if (elements.modelInput) elements.modelInput.value = 'gemini-3.5-flash';
+            if (elements.tempSlider) elements.tempSlider.value = 0.7;
+            if (elements.tempValue) elements.tempValue.textContent = '0.7';
+            updateSettingsVisibility();
+            updateHeaderInfo();
+        });
+    }
 
     // Export Modal
-    elements.exportChatBtn.addEventListener('click', () => {
-        elements.exportModal.classList.add('show');
-    });
-
-    elements.closeExportModal.addEventListener('click', () => {
-        elements.exportModal.classList.remove('show');
-    });
-
-    elements.exportMarkdownBtn.addEventListener('click', () => {
-        let md = `# NovaAI Conversation Export\n*Exported on ${new Date().toLocaleString()}*\n\n---\n\n`;
-        state.currentMessages.forEach(m => {
-            const sender = m.role === 'user' ? '### 👤 User' : '### ⚡ NovaAI';
-            md += `${sender} (${m.timestamp || ''})\n\n${m.content}\n\n---\n\n`;
+    if (elements.exportChatBtn) {
+        elements.exportChatBtn.addEventListener('click', () => {
+            elements.exportModal?.classList.add('show');
         });
-        downloadFile(`conversation-${Date.now()}.md`, md, 'text/markdown');
-        elements.exportModal.classList.remove('show');
-    });
+    }
 
-    elements.exportJsonBtn.addEventListener('click', () => {
-        const json = JSON.stringify({
-            sessionId: state.sessionId,
-            persona: state.persona,
-            exportedAt: new Date().toISOString(),
-            messages: state.currentMessages
-        }, null, 2);
-        downloadFile(`conversation-${Date.now()}.json`, json, 'application/json');
-        elements.exportModal.classList.remove('show');
-    });
+    if (elements.closeExportModal) {
+        elements.closeExportModal.addEventListener('click', () => {
+            elements.exportModal?.classList.remove('show');
+        });
+    }
+
+    if (elements.exportMarkdownBtn) {
+        elements.exportMarkdownBtn.addEventListener('click', () => {
+            let md = `# Nova Conversation Export\n*Exported on ${new Date().toLocaleString()}*\n\n---\n\n`;
+            state.currentMessages.forEach(m => {
+                const sender = m.role === 'user' ? '### 👤 User' : '### ✦ Nova';
+                md += `${sender} (${m.timestamp || ''})\n\n${m.content}\n\n---\n\n`;
+            });
+            downloadFile(`conversation-${Date.now()}.md`, md, 'text/markdown');
+            elements.exportModal?.classList.remove('show');
+        });
+    }
+
+    if (elements.exportJsonBtn) {
+        elements.exportJsonBtn.addEventListener('click', () => {
+            const json = JSON.stringify({
+                sessionId: state.sessionId,
+                persona: state.persona,
+                exportedAt: new Date().toISOString(),
+                messages: state.currentMessages
+            }, null, 2);
+            downloadFile(`conversation-${Date.now()}.json`, json, 'application/json');
+            elements.exportModal?.classList.remove('show');
+        });
+    }
 
     function downloadFile(filename, content, type) {
         const blob = new Blob([content], { type: type });
@@ -702,10 +693,8 @@ document.addEventListener('DOMContentLoaded', () => {
         URL.revokeObjectURL(url);
     }
 
-    // Close modals on clicking outside
     window.addEventListener('click', (e) => {
         if (e.target === elements.settingsModal) elements.settingsModal.classList.remove('show');
-        if (e.target === elements.statusModal) elements.statusModal.classList.remove('show');
         if (e.target === elements.exportModal) elements.exportModal.classList.remove('show');
     });
 
@@ -714,7 +703,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return text ? text.replace(/[&<>"']/g, m => map[m]) : '';
     }
 
-    // Startup Initialization
+    // Startup
     async function init() {
         await loadPersonas();
         await loadSessions();

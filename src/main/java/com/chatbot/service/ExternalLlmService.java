@@ -92,7 +92,7 @@ public class ExternalLlmService {
             throw new IllegalArgumentException("Gemini API key is required.");
         }
         if (model == null || model.isBlank()) {
-            model = "gemini-1.5-flash";
+            model = "gemini-3.5-flash";
         }
 
         // Build contents array
@@ -115,23 +115,33 @@ public class ExternalLlmService {
         payload.put("contents", contents);
         if (systemPrompt != null && !systemPrompt.isBlank()) {
             payload.put("system_instruction", Map.of(
-                    "parts", List.of(Map.of("text", systemPrompt))
+                    "parts", List.of(Map.of("text", systemPrompt + "\nTone: Intelligent, natural, insightful, formatting with clean markdown."))
             ));
         }
 
         String jsonPayload = objectMapper.writeValueAsString(payload);
-        String url = String.format("https://generativelanguage.googleapis.com/v1beta/models/%s:generateContent?key=%s", model, apiKey);
+        String[] candidateModels = new String[]{model, "gemini-flash-lite-latest", "gemini-3.1-flash-lite"};
+        HttpResponse<String> response = null;
 
-        HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(url))
-                .header("Content-Type", "application/json")
-                .timeout(Duration.ofSeconds(60))
-                .POST(HttpRequest.BodyPublishers.ofString(jsonPayload))
-                .build();
+        for (String m : candidateModels) {
+            String url = String.format("https://generativelanguage.googleapis.com/v1beta/models/%s:generateContent?key=%s", m, apiKey);
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(url))
+                    .header("Content-Type", "application/json")
+                    .timeout(Duration.ofSeconds(20))
+                    .POST(HttpRequest.BodyPublishers.ofString(jsonPayload))
+                    .build();
 
-        HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-        if (response.statusCode() != 200) {
-            throw new RuntimeException("Gemini API error (Status " + response.statusCode() + "): " + response.body());
+            try {
+                response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+                if (response.statusCode() == 200) {
+                    break;
+                }
+            } catch (Exception ignored) {}
+        }
+
+        if (response == null || response.statusCode() != 200) {
+            throw new RuntimeException("Gemini API error (Status " + (response != null ? response.statusCode() : "timeout") + ")");
         }
 
         JsonNode root = objectMapper.readTree(response.body());
