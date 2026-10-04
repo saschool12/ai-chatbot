@@ -13,17 +13,16 @@ A modern, ultra-minimal full-stack AI Chatbot application with dual backend supp
   - ✍️ **Creative Writer**: Storytelling, poetry, and persuasive copy.
   - 💼 **Career & Business Coach**: Resume reviews, STAR interview prep, and business strategy.
 - **Dynamic Welcome & Starter Chips**: Interactive starter prompt suggestions customized for each active persona.
+- **Authentic ChatGPT Interface**: Distraction-free, responsive dark/light ChatGPT layout featuring the iconic floating capsule input, auto-expanding prompt box, and seamless mobile sidebar drawer.
+- **Pure AI Answers**: Direct, beautifully formatted markdown answers with code syntax highlighting, copy-to-clipboard, thumbs up/down feedback, and speech synthesis without technical metadata clutter.
 - **Multi-Provider AI Engine**:
   - **Google Gemini**: Support for `gemini-2.5-flash`, `gemini-2.0-flash`, `gemini-1.5-flash`, and `gemini-flash-lite-latest`.
   - **OpenAI Compatible**: Connect OpenAI (GPT-4o, GPT-3.5), Groq, or Ollama.
   - **Nova Smart Engine (Free LLM)**: Fast, free LLM fallback requiring zero API keys.
   - **Built-in Offline Engine**: Built-in mathematical evaluation engine, code synthesizer, and rule-based intelligence.
-- **Customizable Response Tone & Style**: Choose between *Balanced & Detailed*, *Concise & Direct*, *Senior Staff Engineer (Technical)*, and *Friendly Mentor*.
-- **Session Management**: Multi-session conversation history tracking, session switching, and session resets.
+- **Session Management**: Conversation history tracking, session switching, and session resets.
 - **Chat Export**: Instant export of conversations to formatted **Markdown (.md)** or structured **JSON**.
 - **Voice Capabilities**: Built-in Speech-to-Text (voice typing) and Text-to-Speech (audio read-aloud).
-- **System Diagnostics**: Real-time modal displaying application health, runtime, active sessions, and memory statistics.
-- **Modern Responsive UI**: Ultra-minimal dark/light theme, syntax highlighting for code blocks with one-click copy, and mobile-friendly drawer.
 
 ---
 

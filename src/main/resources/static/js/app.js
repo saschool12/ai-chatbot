@@ -1,17 +1,22 @@
 document.addEventListener('DOMContentLoaded', () => {
     const DEFAULT_KEY = '';
 
+    // ChatGPT SVG Avatar
+    const CHATGPT_SVG = `
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+            <path d="M22.2819 9.8211a5.9847 5.9847 0 0 0-.5157-4.9108 6.0462 6.0462 0 0 0-6.5098-2.9A6.0651 6.0651 0 0 0 4.9807 4.1818a5.9847 5.9847 0 0 0-3.9977 2.9 6.0462 6.0462 0 0 0 .7427 7.0966 5.98 5.98 0 0 0 .511 4.9107 6.051 6.051 0 0 0 6.5146 2.9001A5.9847 5.9847 0 0 0 13.2599 24a6.0557 6.0557 0 0 0 5.7718-4.2058 5.9894 5.9894 0 0 0 3.9977-2.9001 6.0557 6.0557 0 0 0-.7475-7.0729zm-9.022 12.6081a4.4755 4.4755 0 0 1-2.8764-1.0408l.1419-.0804 4.7783-2.7582a.7948.7948 0 0 0 .3927-.6813v-6.7369l2.02 1.1686a.071.071 0 0 1 .038.052v5.5826a4.504 4.504 0 0 1-4.4945 4.4944zm-9.6607-4.1254a4.4708 4.4708 0 0 1-.5346-3.0137l.142.0852 4.783 2.7582a.7712.7712 0 0 0 .7806 0l5.8428-3.3685v2.3324a.0804.0804 0 0 1-.0332.0615L9.74 19.9502a4.4992 4.4992 0 0 1-6.1408-1.6464zM2.3408 7.8956a4.485 4.485 0 0 1 2.3655-1.9728V11.6a.7664.7664 0 0 0 .3879.6765l5.8144 3.3543-2.0201 1.1685a.0757.0757 0 0 1-.071 0l-4.8303-2.7865A4.504 4.504 0 0 1 2.3408 7.8956zm16.0993 3.8558L12.5973 8.3829l2.02-1.164a.0757.0757 0 0 1 .071 0l4.8303 2.7913a4.4944 4.4944 0 0 1-.6765 8.1042v-5.6772a.79.79 0 0 0-.4018-.5816zm2.0107-3.0231l-.142-.0852-4.7735-2.7818a.7759.7759 0 0 0-.7854 0L9.409 9.2297V6.8974a.0662.0662 0 0 1 .0284-.0615l4.8303-2.7866a4.4992 4.4992 0 0 1 6.6802 4.66zM8.3065 12.863l-2.02-1.1639a.0804.0804 0 0 1-.038-.0567V6.0742a4.4992 4.4992 0 0 1 7.3757-3.4537l-.142.0805L8.704 5.459a.7948.7948 0 0 0-.3927.6813v6.7227zm1.1458-1.9213l2.552-1.472a.79.79 0 0 0 .3927-.6813V5.8452l2.552 1.472a.071.071 0 0 1 .038.0615v2.944a.79.79 0 0 0 .3927.6813l2.552 1.472-2.552 1.472a.79.79 0 0 0-.3927.6813v2.944a.071.071 0 0 1-.038.0615l-2.552-1.472a.79.79 0 0 0-.3927-.6813v-2.944a.79.79 0 0 0-.3927-.6813z"/>
+        </svg>
+    `;
+
     // State
     const state = {
         sessionId: localStorage.getItem('nova_session_id') || null,
-        persona: localStorage.getItem('nova_persona') || 'general',
+        persona: 'general',
         provider: localStorage.getItem('nova_provider') || 'gemini',
         apiKey: localStorage.getItem('nova_api_key') || DEFAULT_KEY,
-        model: localStorage.getItem('nova_model') || 'gemini-3.5-flash',
-        temperature: parseFloat(localStorage.getItem('nova_temperature') || '0.7'),
-        tone: localStorage.getItem('nova_tone') || 'detailed',
+        model: localStorage.getItem('nova_model') || 'gemini-2.5-flash',
+        temperature: 0.7,
         theme: localStorage.getItem('nova_theme') || 'dark',
-        personas: [],
         currentMessages: [],
         isGenerating: false,
         isRecording: false
@@ -26,13 +31,9 @@ document.addEventListener('DOMContentLoaded', () => {
         openSidebarBtn: document.getElementById('openSidebarBtn'),
         closeSidebarBtn: document.getElementById('closeSidebarBtn'),
         newChatBtn: document.getElementById('newChatBtn'),
-        personaList: document.getElementById('personaList'),
+        topNewChatBtn: document.getElementById('topNewChatBtn'),
         sessionsList: document.getElementById('sessionsList'),
         clearAllBtn: document.getElementById('clearAllBtn'),
-        
-        headerPersonaIcon: document.getElementById('headerPersonaIcon'),
-        headerPersonaName: document.getElementById('headerPersonaName'),
-        headerEngineBadge: document.getElementById('headerEngineBadge'),
         
         chatContainer: document.getElementById('chatContainer'),
         welcomeScreen: document.getElementById('welcomeScreen'),
@@ -52,11 +53,6 @@ document.addEventListener('DOMContentLoaded', () => {
         apiKeyGroup: document.getElementById('apiKeyGroup'),
         apiKeyInput: document.getElementById('apiKeyInput'),
         toggleApiKeyVisibility: document.getElementById('toggleApiKeyVisibility'),
-        modelGroup: document.getElementById('modelGroup'),
-        modelInput: document.getElementById('modelInput'),
-        toneSelect: document.getElementById('toneSelect'),
-        tempSlider: document.getElementById('tempSlider'),
-        tempValue: document.getElementById('tempValue'),
         saveSettingsBtn: document.getElementById('saveSettingsBtn'),
         resetSettingsBtn: document.getElementById('resetSettingsBtn'),
         
@@ -65,18 +61,7 @@ document.addEventListener('DOMContentLoaded', () => {
         exportChatBtn: document.getElementById('exportChatBtn'),
         closeExportModal: document.getElementById('closeExportModal'),
         exportMarkdownBtn: document.getElementById('exportMarkdownBtn'),
-        exportJsonBtn: document.getElementById('exportJsonBtn'),
-
-        // Status Modal
-        statusModal: document.getElementById('statusModal'),
-        statusModalBtn: document.getElementById('statusModalBtn'),
-        closeStatusModal: document.getElementById('closeStatusModal'),
-        diagAppName: document.getElementById('diagAppName'),
-        diagJavaVersion: document.getElementById('diagJavaVersion'),
-        diagMemory: document.getElementById('diagMemory'),
-        diagUptime: document.getElementById('diagUptime'),
-        diagSessions: document.getElementById('diagSessions'),
-        diagPersonas: document.getElementById('diagPersonas')
+        exportJsonBtn: document.getElementById('exportJsonBtn')
     };
 
     // Configure Marked.js
@@ -115,249 +100,149 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Mobile Sidebar
-    if (elements.openSidebarBtn) {
-        elements.openSidebarBtn.addEventListener('click', () => {
-            elements.sidebar?.classList.add('open');
-            elements.sidebarOverlay?.classList.add('show');
-        });
-    }
-
-    const closeSidebar = () => {
-        elements.sidebar?.classList.remove('open');
-        elements.sidebarOverlay?.classList.remove('show');
-    };
-    if (elements.closeSidebarBtn) elements.closeSidebarBtn.addEventListener('click', closeSidebar);
-    if (elements.sidebarOverlay) elements.sidebarOverlay.addEventListener('click', closeSidebar);
-
-    // Update Header Badges
-    function updateHeaderInfo() {
-        const persona = state.personas.find(p => p.id === state.persona) || {
-            name: 'General Assistant',
-            icon: '🤖'
-        };
-        if (elements.headerPersonaIcon) elements.headerPersonaIcon.textContent = persona.icon;
-        if (elements.headerPersonaName) elements.headerPersonaName.textContent = persona.name;
-
-        if (elements.headerEngineBadge) {
-            if (state.provider === 'gemini') {
-                elements.headerEngineBadge.textContent = 'Gemini 3.5 Flash';
-            } else if (state.provider === 'openai') {
-                elements.headerEngineBadge.textContent = 'OpenAI: ' + (state.model || 'gpt-4o-mini');
+    // Sidebar Toggling
+    function toggleSidebar() {
+        if (window.innerWidth <= 768) {
+            const isOpen = elements.sidebar?.classList.contains('open');
+            if (isOpen) {
+                elements.sidebar?.classList.remove('open');
+                elements.sidebarOverlay?.classList.remove('show');
             } else {
-                elements.headerEngineBadge.textContent = 'Nova Smart';
+                elements.sidebar?.classList.add('open');
+                elements.sidebarOverlay?.classList.add('show');
             }
+        } else {
+            elements.sidebar?.classList.toggle('collapsed');
         }
     }
 
-    // Load Personas
-    async function loadPersonas() {
-        try {
-            const res = await fetch('/api/personas');
-            if (!res.ok) throw new Error('Failed to load personas');
-            state.personas = await res.json();
-            renderPersonas();
-            updateHeaderInfo();
-        } catch (err) {
-            console.error(err);
-        }
-    }
-
-    function renderPersonas() {
-        if (!elements.personaList) return;
-        elements.personaList.innerHTML = '';
-        state.personas.forEach(p => {
-            const btn = document.createElement('button');
-            btn.className = `persona-item ${p.id === state.persona ? 'active' : ''}`;
-            btn.innerHTML = `
-                <span class="persona-icon">${p.icon}</span>
-                <span>${p.name}</span>
-            `;
-            btn.addEventListener('click', () => {
-                selectPersona(p.id);
-            });
-            elements.personaList.appendChild(btn);
+    if (elements.openSidebarBtn) elements.openSidebarBtn.addEventListener('click', toggleSidebar);
+    if (elements.closeSidebarBtn) elements.closeSidebarBtn.addEventListener('click', toggleSidebar);
+    if (elements.sidebarOverlay) {
+        elements.sidebarOverlay.addEventListener('click', () => {
+            elements.sidebar?.classList.remove('open');
+            elements.sidebarOverlay?.classList.remove('show');
         });
-    }
-
-    function selectPersona(personaId) {
-        state.persona = personaId;
-        localStorage.setItem('nova_persona', personaId);
-        renderPersonas();
-        updateHeaderInfo();
-        createNewChat();
     }
 
     // Load Sessions
     async function loadSessions() {
         try {
-            const res = await fetch('/api/sessions');
-            if (!res.ok) return;
-            const sessions = await res.json();
+            const response = await fetch('/api/sessions');
+            if (!response.ok) return;
+            const sessions = await response.json();
             renderSessions(sessions);
         } catch (err) {
-            console.error(err);
+            // Silently handle
         }
     }
 
     function renderSessions(sessions) {
         if (!elements.sessionsList) return;
         elements.sessionsList.innerHTML = '';
+
         if (!sessions || sessions.length === 0) {
-            elements.sessionsList.innerHTML = '<span style="font-size:0.75rem; color:var(--text-muted); padding: 0.5rem 0.6rem;">No recent chats</span>';
+            elements.sessionsList.innerHTML = `
+                <div style="font-size:0.8rem; color:var(--text-muted); padding:0.5rem; text-align:center;">
+                    No recent chats
+                </div>
+            `;
             return;
         }
 
         sessions.forEach(sess => {
-            const div = document.createElement('div');
-            div.className = `session-item ${sess.id === state.sessionId ? 'active' : ''}`;
-            div.innerHTML = `
-                <span class="session-title">${escapeHtml(sess.title)}</span>
-                <button class="btn-delete-session" title="Delete conversation"><i class="fa-solid fa-xmark"></i></button>
+            const item = document.createElement('div');
+            item.className = `session-item ${sess.id === state.sessionId ? 'active' : ''}`;
+            
+            // Generate clean title
+            let title = 'Chat';
+            if (sess.messages && sess.messages.length > 0) {
+                const firstUser = sess.messages.find(m => m.role === 'user');
+                if (firstUser && firstUser.content) {
+                    title = firstUser.content.trim().slice(0, 28);
+                    if (firstUser.content.length > 28) title += '...';
+                }
+            }
+
+            item.innerHTML = `
+                <div class="session-title-wrap">
+                    <i class="fa-regular fa-message"></i>
+                    <span class="session-text">${escapeHtml(title)}</span>
+                </div>
+                <button class="btn-delete-session" title="Delete chat">
+                    <i class="fa-regular fa-trash-can"></i>
+                </button>
             `;
 
-            div.querySelector('.session-title').addEventListener('click', () => {
-                openSession(sess.id);
-                closeSidebar();
+            item.querySelector('.session-title-wrap').addEventListener('click', () => {
+                selectSession(sess.id);
             });
 
-            div.querySelector('.btn-delete-session').addEventListener('click', async (e) => {
+            item.querySelector('.btn-delete-session').addEventListener('click', (e) => {
                 e.stopPropagation();
-                await deleteSession(sess.id);
+                deleteSession(sess.id);
             });
 
-            elements.sessionsList.appendChild(div);
+            elements.sessionsList.appendChild(item);
         });
     }
 
-    async function openSession(id) {
+    async function selectSession(sessionId) {
         try {
-            const res = await fetch(`/api/sessions/${id}`);
-            if (!res.ok) return;
-            const session = await res.json();
-            state.sessionId = session.id;
-            state.persona = session.persona || 'general';
-            localStorage.setItem('nova_session_id', session.id);
-            localStorage.setItem('nova_persona', state.persona);
-
-            renderPersonas();
-            updateHeaderInfo();
-            renderMessages(session.messages);
+            const response = await fetch(`/api/sessions/${sessionId}`);
+            if (!response.ok) return;
+            const data = await response.json();
+            state.sessionId = data.id;
+            localStorage.setItem('nova_session_id', data.id);
+            renderMessages(data.messages || []);
             loadSessions();
+
+            if (window.innerWidth <= 768) {
+                elements.sidebar?.classList.remove('open');
+                elements.sidebarOverlay?.classList.remove('show');
+            }
         } catch (err) {
-            console.error(err);
+            // Handled
         }
     }
 
-    async function createNewChat() {
+    async function deleteSession(sessionId) {
         try {
-            const res = await fetch(`/api/sessions?persona=${encodeURIComponent(state.persona)}`, {
-                method: 'POST'
-            });
-            if (!res.ok) throw new Error('Failed to create session');
-            const session = await res.json();
-            state.sessionId = session.id;
-            localStorage.setItem('nova_session_id', session.id);
-            renderMessages(session.messages);
-            loadSessions();
-            closeSidebar();
-        } catch (err) {
-            console.error(err);
-        }
-    }
-
-    async function deleteSession(id) {
-        try {
-            await fetch(`/api/sessions/${id}`, { method: 'DELETE' });
-            if (state.sessionId === id) {
+            await fetch(`/api/sessions/${sessionId}`, { method: 'DELETE' });
+            if (state.sessionId === sessionId) {
                 createNewChat();
             } else {
                 loadSessions();
             }
         } catch (err) {
-            console.error(err);
+            // Handled
+        }
+    }
+
+    async function createNewChat() {
+        state.sessionId = null;
+        state.currentMessages = [];
+        localStorage.removeItem('nova_session_id');
+        renderMessages([]);
+        loadSessions();
+        if (elements.chatInput) {
+            elements.chatInput.value = '';
+            elements.chatInput.focus();
+            handleInputChange();
+        }
+        if (window.innerWidth <= 768) {
+            elements.sidebar?.classList.remove('open');
+            elements.sidebarOverlay?.classList.remove('show');
         }
     }
 
     async function clearAllSessions() {
-        if (!confirm('Clear all conversation history?')) return;
+        if (!confirm('Are you sure you want to clear all conversation history?')) return;
         try {
             await fetch('/api/clear', { method: 'POST' });
             createNewChat();
         } catch (err) {
-            console.error(err);
-        }
-    }
-
-    const PERSONA_CONFIGS = {
-        general: {
-            heading: 'How can I help you today?',
-            chips: [
-                { icon: '⚛️', text: 'Explain quantum computing', prompt: 'Explain quantum computing in simple, intuitive terms with everyday analogies.' },
-                { icon: '💻', text: 'Write clean Java REST API', prompt: 'Write clean, idiomatic Java code for a production REST API controller using Spring Boot 3.' },
-                { icon: '💼', text: 'Prep for tech interview', prompt: 'Give me high-impact resume and system design interview tips for Senior Software Engineers.' },
-                { icon: '✍️', text: 'Write a short sci-fi story', prompt: 'Write a short, suspenseful sci-fi story about an AI that woke up.' }
-            ]
-        },
-        coder: {
-            heading: 'What are we building today?',
-            chips: [
-                { icon: '☕', text: 'Spring Boot REST Controller', prompt: 'Show me an idiomatic Spring Boot 3 REST controller with validation, exception handling, and service injection.' },
-                { icon: '⚡', text: 'Debug ConcurrentModification', prompt: 'Why does ConcurrentModificationException happen in Java and what are the best ways to fix it?' },
-                { icon: '📐', text: 'Microservices Saga Pattern', prompt: 'Explain the Saga pattern for distributed transactions in microservices with choreography vs orchestration.' },
-                { icon: '🔄', text: 'LRU Cache Implementation', prompt: 'Implement an efficient LRU Cache in Java with O(1) get and put operations.' }
-            ]
-        },
-        science: {
-            heading: 'What shall we explore today?',
-            chips: [
-                { icon: '🌌', text: 'Quantum Entanglement', prompt: 'Explain quantum entanglement, Bell\'s theorem, and why Einstein called it spooky action at a distance.' },
-                { icon: '📐', text: 'Integration by Parts', prompt: 'Walk through integration by parts step-by-step with an illustrative, practical calculus example.' },
-                { icon: '🧬', text: 'How CRISPR Works', prompt: 'Explain the molecular mechanism of CRISPR-Cas9 gene editing and its modern medical applications.' },
-                { icon: '🕳️', text: 'Black Hole Event Horizons', prompt: 'Explain what happens at the event horizon of a black hole, gravitational time dilation, and Hawking radiation.' }
-            ]
-        },
-        writer: {
-            heading: 'What shall we write today?',
-            chips: [
-                { icon: '📖', text: 'Cyberpunk Story Prologue', prompt: 'Write a gripping prologue for a cyberpunk noir story set in Neo-Kyoto in 2089.' },
-                { icon: '✉️', text: 'Product Launch Email', prompt: 'Draft a compelling, high-converting product launch email for an innovative developer tool.' },
-                { icon: '🎭', text: 'Character Sketches', prompt: 'Create three compelling, psychologically distinct character profiles for a sci-fi mystery.' },
-                { icon: '📜', text: 'Poem on Rain & Neon', prompt: 'Compose an evocative poem capturing the melancholy of rain-soaked neon city streets at midnight.' }
-            ]
-        },
-        career: {
-            heading: 'How can I advance your career today?',
-            chips: [
-                { icon: '📄', text: 'Senior Engineer Resume Bullets', prompt: 'Provide 5 high-impact, metrics-driven resume bullet points using the Google XYZ formula for a Senior Backend Engineer.' },
-                { icon: '🎯', text: 'STAR Behavioral Interview', prompt: 'How do I answer "Tell me about a time you had a technical disagreement with a team lead" using the STAR method?' },
-                { icon: '💼', text: 'Salary Negotiation Script', prompt: 'Give me a polite but firm salary negotiation script for countering an initial offer for a tech lead role.' },
-                { icon: '🗺️', text: 'System Design Study Plan', prompt: 'Give me a structured 4-week roadmap to prepare for Senior/Staff System Design interviews.' }
-            ]
-        }
-    };
-
-    function renderWelcomeScreen(personaId) {
-        if (!elements.welcomeScreen) return;
-        const conf = PERSONA_CONFIGS[personaId] || PERSONA_CONFIGS.general;
-        const headingEl = elements.welcomeScreen.querySelector('.welcome-heading');
-        if (headingEl) headingEl.textContent = conf.heading;
-
-        const chipsContainer = elements.welcomeScreen.querySelector('.starter-chips');
-        if (chipsContainer) {
-            chipsContainer.innerHTML = conf.chips.map(c => `
-                <button class="starter-chip" data-prompt="${escapeHtml(c.prompt)}">
-                    <span class="chip-icon">${c.icon}</span>
-                    <span>${escapeHtml(c.text)}</span>
-                </button>
-            `).join('');
-
-            chipsContainer.querySelectorAll('.starter-chip').forEach(btn => {
-                btn.addEventListener('click', () => {
-                    const prompt = btn.getAttribute('data-prompt');
-                    sendMessage(prompt);
-                });
-            });
+            // Handled
         }
     }
 
@@ -369,7 +254,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const hasUserMessage = state.currentMessages.some(m => m.role === 'user');
         if (!hasUserMessage) {
-            renderWelcomeScreen(state.persona);
             if (elements.welcomeScreen) elements.welcomeScreen.style.display = 'flex';
         } else {
             if (elements.welcomeScreen) elements.welcomeScreen.style.display = 'none';
@@ -384,8 +268,6 @@ document.addEventListener('DOMContentLoaded', () => {
         item.className = `message-item ${msg.role}`;
 
         const isUser = msg.role === 'user';
-        const avatar = isUser ? '' : `<span style="font-size:0.9rem;">✦</span>`;
-
         let formattedContent = '';
         if (isUser) {
             formattedContent = `<p>${escapeHtml(msg.content).replace(/\n/g, '<br>')}</p>`;
@@ -393,21 +275,21 @@ document.addEventListener('DOMContentLoaded', () => {
             formattedContent = window.marked ? marked.parse(msg.content) : `<p>${escapeHtml(msg.content)}</p>`;
         }
 
-        const metaTokens = msg.tokens ? `${msg.tokens} tokens` : '';
-        const metaLatency = msg.latencyMs ? ` • ${msg.latencyMs}ms` : '';
-        const metaHtml = !isUser ? `
-            <div class="message-meta">
-                <span>${metaTokens}${metaLatency}</span>
-                <button class="btn-meta-action btn-copy-msg" title="Copy response"><i class="fa-regular fa-copy"></i></button>
-                <button class="btn-meta-action btn-speak-msg" title="Read aloud"><i class="fa-solid fa-volume-high"></i></button>
+        // ChatGPT Action Buttons below response
+        const actionsHtml = !isUser ? `
+            <div class="message-actions">
+                <button class="btn-msg-action btn-copy-msg" title="Copy response"><i class="fa-regular fa-copy"></i></button>
+                <button class="btn-msg-action btn-like-msg" title="Good response"><i class="fa-regular fa-thumbs-up"></i></button>
+                <button class="btn-msg-action btn-dislike-msg" title="Bad response"><i class="fa-regular fa-thumbs-down"></i></button>
+                <button class="btn-msg-action btn-speak-msg" title="Read aloud"><i class="fa-solid fa-volume-high"></i></button>
             </div>
         ` : '';
 
         item.innerHTML = `
-            ${!isUser ? `<div class="message-avatar">${avatar}</div>` : ''}
+            ${!isUser ? `<div class="message-avatar">${CHATGPT_SVG}</div>` : ''}
             <div class="message-content-wrapper">
                 <div class="message-bubble">${formattedContent}</div>
-                ${metaHtml}
+                ${actionsHtml}
             </div>
         `;
 
@@ -425,7 +307,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 header.className = 'code-header';
                 header.innerHTML = `
                     <span>${langName}</span>
-                    <button class="btn-copy-code"><i class="fa-regular fa-copy"></i> Copy</button>
+                    <button class="btn-copy-code"><i class="fa-regular fa-copy"></i> Copy code</button>
                 `;
 
                 header.querySelector('.btn-copy-code').addEventListener('click', () => {
@@ -433,7 +315,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     const btn = header.querySelector('.btn-copy-code');
                     btn.innerHTML = '<i class="fa-solid fa-check"></i> Copied!';
                     setTimeout(() => {
-                        btn.innerHTML = '<i class="fa-regular fa-copy"></i> Copy';
+                        btn.innerHTML = '<i class="fa-regular fa-copy"></i> Copy code';
                     }, 2000);
                 });
 
@@ -442,6 +324,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 wrapper.appendChild(pre);
             });
 
+            // Copy Response Action
             const copyMsgBtn = item.querySelector('.btn-copy-msg');
             if (copyMsgBtn) {
                 copyMsgBtn.addEventListener('click', () => {
@@ -451,6 +334,21 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
             }
 
+            // Thumbs Up / Down toggles
+            const likeBtn = item.querySelector('.btn-like-msg');
+            const dislikeBtn = item.querySelector('.btn-dislike-msg');
+            if (likeBtn && dislikeBtn) {
+                likeBtn.addEventListener('click', () => {
+                    likeBtn.classList.toggle('active');
+                    dislikeBtn.classList.remove('active');
+                });
+                dislikeBtn.addEventListener('click', () => {
+                    dislikeBtn.classList.toggle('active');
+                    likeBtn.classList.remove('active');
+                });
+            }
+
+            // Speak Action
             const speakBtn = item.querySelector('.btn-speak-msg');
             if (speakBtn) {
                 speakBtn.addEventListener('click', () => {
@@ -496,7 +394,7 @@ document.addEventListener('DOMContentLoaded', () => {
         window.speechSynthesis.speak(utterance);
     }
 
-    // Speech to Text
+    // Speech to Text (Voice typing)
     if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
         const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
         const recognition = new SpeechRec();
@@ -550,12 +448,12 @@ document.addEventListener('DOMContentLoaded', () => {
             handleInputChange();
         }
 
-        // User Message
+        // Add User Message to UI
         const userMsg = { role: 'user', content: text, timestamp: new Date().toISOString() };
         appendMessageToFeed(userMsg);
         state.currentMessages.push(userMsg);
 
-        // Typing Indicator
+        // Show Typing Indicator
         if (elements.typingIndicator) elements.typingIndicator.style.display = 'flex';
         scrollToBottom();
 
@@ -567,8 +465,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 provider: state.provider,
                 model: state.model,
                 apiKey: state.apiKey,
-                temperature: state.temperature,
-                tone: state.tone
+                temperature: state.temperature
             };
 
             const response = await fetch('/api/chat', {
@@ -620,7 +517,7 @@ document.addEventListener('DOMContentLoaded', () => {
         elements.sendBtn.disabled = len === 0;
 
         elements.chatInput.style.height = 'auto';
-        elements.chatInput.style.height = `${Math.min(elements.chatInput.scrollHeight, 160)}px`;
+        elements.chatInput.style.height = `${Math.min(elements.chatInput.scrollHeight, 180)}px`;
     }
 
     if (elements.chatInput) {
@@ -635,6 +532,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (elements.sendBtn) {
         elements.sendBtn.addEventListener('click', () => sendMessage());
+    }
+
+    // Top New Chat Button
+    if (elements.topNewChatBtn) {
+        elements.topNewChatBtn.addEventListener('click', createNewChat);
     }
 
     // Starter Prompt Chips
@@ -653,10 +555,6 @@ document.addEventListener('DOMContentLoaded', () => {
         elements.settingsModalBtn.addEventListener('click', () => {
             if (elements.providerSelect) elements.providerSelect.value = state.provider;
             if (elements.apiKeyInput) elements.apiKeyInput.value = state.apiKey;
-            if (elements.modelInput) elements.modelInput.value = state.model;
-            if (elements.toneSelect) elements.toneSelect.value = state.tone;
-            if (elements.tempSlider) elements.tempSlider.value = state.temperature;
-            if (elements.tempValue) elements.tempValue.textContent = state.temperature;
             updateSettingsVisibility();
             elements.settingsModal?.classList.add('show');
         });
@@ -670,19 +568,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function updateSettingsVisibility() {
         const val = elements.providerSelect?.value;
-        const needsKey = val === 'openai' || val === 'gemini';
+        const needsKey = val === 'openai';
         if (elements.apiKeyGroup) elements.apiKeyGroup.style.display = needsKey ? 'flex' : 'none';
-        if (elements.modelGroup) elements.modelGroup.style.display = needsKey ? 'flex' : 'none';
     }
 
     if (elements.providerSelect) {
         elements.providerSelect.addEventListener('change', updateSettingsVisibility);
-    }
-
-    if (elements.tempSlider && elements.tempValue) {
-        elements.tempSlider.addEventListener('input', (e) => {
-            elements.tempValue.textContent = e.target.value;
-        });
     }
 
     if (elements.toggleApiKeyVisibility && elements.apiKeyInput) {
@@ -697,17 +588,10 @@ document.addEventListener('DOMContentLoaded', () => {
         elements.saveSettingsBtn.addEventListener('click', () => {
             state.provider = elements.providerSelect.value;
             state.apiKey = elements.apiKeyInput.value.trim() || DEFAULT_KEY;
-            state.model = elements.modelInput.value.trim() || (state.provider === 'gemini' ? 'gemini-3.5-flash' : 'gpt-4o-mini');
-            state.tone = elements.toneSelect ? elements.toneSelect.value : 'detailed';
-            state.temperature = parseFloat(elements.tempSlider.value);
 
             localStorage.setItem('nova_provider', state.provider);
             localStorage.setItem('nova_api_key', state.apiKey);
-            localStorage.setItem('nova_model', state.model);
-            localStorage.setItem('nova_tone', state.tone);
-            localStorage.setItem('nova_temperature', state.temperature);
 
-            updateHeaderInfo();
             elements.settingsModal?.classList.remove('show');
         });
     }
@@ -716,24 +600,13 @@ document.addEventListener('DOMContentLoaded', () => {
         elements.resetSettingsBtn.addEventListener('click', () => {
             state.provider = 'gemini';
             state.apiKey = DEFAULT_KEY;
-            state.model = 'gemini-3.5-flash';
-            state.tone = 'detailed';
-            state.temperature = 0.7;
 
             localStorage.removeItem('nova_provider');
             localStorage.removeItem('nova_api_key');
-            localStorage.removeItem('nova_model');
-            localStorage.removeItem('nova_tone');
-            localStorage.removeItem('nova_temperature');
 
             if (elements.providerSelect) elements.providerSelect.value = 'gemini';
             if (elements.apiKeyInput) elements.apiKeyInput.value = DEFAULT_KEY;
-            if (elements.modelInput) elements.modelInput.value = 'gemini-3.5-flash';
-            if (elements.toneSelect) elements.toneSelect.value = 'detailed';
-            if (elements.tempSlider) elements.tempSlider.value = 0.7;
-            if (elements.tempValue) elements.tempValue.textContent = '0.7';
             updateSettingsVisibility();
-            updateHeaderInfo();
         });
     }
 
@@ -752,90 +625,68 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (elements.exportMarkdownBtn) {
         elements.exportMarkdownBtn.addEventListener('click', () => {
-            let md = `# Nova Conversation Export\n*Exported on ${new Date().toLocaleString()}*\n\n---\n\n`;
-            state.currentMessages.forEach(m => {
-                const sender = m.role === 'user' ? '### 👤 User' : '### ✦ Nova';
-                md += `${sender} (${m.timestamp || ''})\n\n${m.content}\n\n---\n\n`;
-            });
-            downloadFile(`conversation-${Date.now()}.md`, md, 'text/markdown');
+            exportAsMarkdown();
             elements.exportModal?.classList.remove('show');
         });
     }
 
     if (elements.exportJsonBtn) {
         elements.exportJsonBtn.addEventListener('click', () => {
-            const json = JSON.stringify({
-                sessionId: state.sessionId,
-                persona: state.persona,
-                exportedAt: new Date().toISOString(),
-                messages: state.currentMessages
-            }, null, 2);
-            downloadFile(`conversation-${Date.now()}.json`, json, 'application/json');
+            exportAsJson();
             elements.exportModal?.classList.remove('show');
         });
     }
 
-    function downloadFile(filename, content, type) {
-        const blob = new Blob([content], { type: type });
-        const url = URL.createObjectURL(blob);
+    function exportAsMarkdown() {
+        if (!state.currentMessages || state.currentMessages.length === 0) {
+            alert('No messages to export.');
+            return;
+        }
+
+        let md = `# ChatGPT Conversation\n\n*Exported on ${new Date().toLocaleString()}*\n\n---\n\n`;
+        state.currentMessages.forEach(msg => {
+            const role = msg.role === 'user' ? '### 👤 You' : '### 🤖 ChatGPT';
+            md += `${role}\n\n${msg.content}\n\n---\n\n`;
+        });
+
+        downloadFile(md, `chatgpt-export-${Date.now()}.md`, 'text/markdown');
+    }
+
+    function exportAsJson() {
+        if (!state.currentMessages || state.currentMessages.length === 0) {
+            alert('No messages to export.');
+            return;
+        }
+
+        const data = {
+            exportDate: new Date().toISOString(),
+            sessionId: state.sessionId,
+            messages: state.currentMessages
+        };
+
+        downloadFile(JSON.stringify(data, null, 2), `chatgpt-session-${Date.now()}.json`, 'application/json');
+    }
+
+    function downloadFile(content, fileName, contentType) {
         const a = document.createElement('a');
-        a.href = url;
-        a.download = filename;
-        document.body.appendChild(a);
+        const file = new Blob([content], { type: contentType });
+        a.href = URL.createObjectURL(file);
+        a.download = fileName;
         a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
+        URL.revokeObjectURL(a.href);
     }
-
-    // Status Modal
-    if (elements.statusModalBtn) {
-        elements.statusModalBtn.addEventListener('click', async () => {
-            try {
-                const res = await fetch('/api/status');
-                if (res.ok) {
-                    const data = await res.json();
-                    if (elements.diagAppName) elements.diagAppName.textContent = (data.application || 'NovaAI') + ' v' + (data.version || '1.0');
-                    if (elements.diagJavaVersion) elements.diagJavaVersion.textContent = data.javaVersion || 'Ready';
-                    if (elements.diagMemory) elements.diagMemory.textContent = `${data.usedMemoryMb || 0} MB / ${data.totalMemoryMb || 0} MB`;
-                    if (elements.diagUptime) elements.diagUptime.textContent = `${data.uptimeSeconds || 0}s`;
-                    if (elements.diagSessions) elements.diagSessions.textContent = data.activeSessions || 0;
-                    if (elements.diagPersonas) elements.diagPersonas.textContent = data.availablePersonas || 5;
-                }
-            } catch (err) {
-                console.error(err);
-            }
-            elements.statusModal?.classList.add('show');
-        });
-    }
-
-    if (elements.closeStatusModal) {
-        elements.closeStatusModal.addEventListener('click', () => {
-            elements.statusModal?.classList.remove('show');
-        });
-    }
-
-    window.addEventListener('click', (e) => {
-        if (e.target === elements.settingsModal) elements.settingsModal.classList.remove('show');
-        if (e.target === elements.statusModal) elements.statusModal.classList.remove('show');
-        if (e.target === elements.exportModal) elements.exportModal.classList.remove('show');
-    });
 
     function escapeHtml(text) {
+        if (!text) return '';
         const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
-        return text ? text.replace(/[&<>"']/g, m => map[m]) : '';
+        return text.replace(/[&<>"']/g, m => map[m]);
     }
 
-    // Startup
-    async function init() {
-        await loadPersonas();
-        await loadSessions();
-
-        if (state.sessionId) {
-            await openSession(state.sessionId);
-        } else {
-            await createNewChat();
-        }
+    // Initialize
+    if (state.sessionId) {
+        selectSession(state.sessionId);
+    } else {
+        renderMessages([]);
+        loadSessions();
     }
-
-    init();
 });

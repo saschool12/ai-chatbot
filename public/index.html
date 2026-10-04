@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nova — AI Assistant</title>
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>✦</text></svg>">
+    <title>ChatGPT</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22%2310a37f%22><path d=%22M22.2819 9.8211a5.9847 5.9847 0 0 0-.5157-4.9108 6.0462 6.0462 0 0 0-6.5098-2.9A6.0651 6.0651 0 0 0 4.9807 4.1818a5.9847 5.9847 0 0 0-3.9977 2.9 6.0462 6.0462 0 0 0 .7427 7.0966 5.98 5.98 0 0 0 .511 4.9107 6.051 6.051 0 0 0 6.5146 2.9001A5.9847 5.9847 0 0 0 13.2599 24a6.0557 6.0557 0 0 0 5.7718-4.2058 5.9894 5.9894 0 0 0 3.9977-2.9001 6.0557 6.0557 0 0 0-.7475-7.0729zm-9.022 12.6081a4.4755 4.4755 0 0 1-2.8764-1.0408l.1419-.0804 4.7783-2.7582a.7948.7948 0 0 0 .3927-.6813v-6.7369l2.02 1.1686a.071.071 0 0 1 .038.052v5.5826a4.504 4.504 0 0 1-4.4945 4.4944zm-9.6607-4.1254a4.4708 4.4708 0 0 1-.5346-3.0137l.142.0852 4.783 2.7582a.7712.7712 0 0 0 .7806 0l5.8428-3.3685v2.3324a.0804.0804 0 0 1-.0332.0615L9.74 19.9502a4.4992 4.4992 0 0 1-6.1408-1.6464zM2.3408 7.8956a4.485 4.485 0 0 1 2.3655-1.9728V11.6a.7664.7664 0 0 0 .3879.6765l5.8144 3.3543-2.0201 1.1685a.0757.0757 0 0 1-.071 0l-4.8303-2.7865A4.504 4.504 0 0 1 2.3408 7.8956zm16.0993 3.8558L12.5973 8.3829l2.02-1.164a.0757.0757 0 0 1 .071 0l4.8303 2.7913a4.4944 4.4944 0 0 1-.6765 8.1042v-5.6772a.79.79 0 0 0-.4018-.5816zm2.0107-3.0231l-.142-.0852-4.7735-2.7818a.7759.7759 0 0 0-.7854 0L9.409 9.2297V6.8974a.0662.0662 0 0 1 .0284-.0615l4.8303-2.7866a4.4992 4.4992 0 0 1 6.6802 4.66zM8.3065 12.863l-2.02-1.1639a.0804.0804 0 0 1-.038-.0567V6.0742a4.4992 4.4992 0 0 1 7.3757-3.4537l-.142.0805L8.704 5.459a.7948.7948 0 0 0-.3927.6813v6.7227zm1.1458-1.9213l2.552-1.472a.79.79 0 0 0 .3927-.6813V5.8452l2.552 1.472a.071.071 0 0 1 .038.0615v2.944a.79.79 0 0 0 .3927.6813l2.552 1.472-2.552 1.472a.79.79 0 0 0-.3927.6813v2.944a.071.071 0 0 1-.038.0615l-2.552-1.472a.79.79 0 0 0-.3927-.6813v-2.944a.79.79 0 0 0-.3927-.6813z%22/></svg>">
     
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     
     <!-- Icons & Highlighting -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
@@ -20,53 +20,42 @@
 </head>
 <body>
     <div class="app-layout">
-        <!-- Sidebar -->
+        <!-- ChatGPT Sidebar -->
         <aside class="sidebar" id="sidebar">
             <div class="sidebar-header">
                 <div class="brand">
-                    <span class="brand-sparkle">✦</span>
-                    <span class="brand-name">Nova</span>
-                    <span class="status-dot" title="Online & Ready"></span>
+                    <svg class="chatgpt-logo-svg" viewBox="0 0 24 24" width="22" height="22" fill="currentColor">
+                        <path d="M22.2819 9.8211a5.9847 5.9847 0 0 0-.5157-4.9108 6.0462 6.0462 0 0 0-6.5098-2.9A6.0651 6.0651 0 0 0 4.9807 4.1818a5.9847 5.9847 0 0 0-3.9977 2.9 6.0462 6.0462 0 0 0 .7427 7.0966 5.98 5.98 0 0 0 .511 4.9107 6.051 6.051 0 0 0 6.5146 2.9001A5.9847 5.9847 0 0 0 13.2599 24a6.0557 6.0557 0 0 0 5.7718-4.2058 5.9894 5.9894 0 0 0 3.9977-2.9001 6.0557 6.0557 0 0 0-.7475-7.0729zm-9.022 12.6081a4.4755 4.4755 0 0 1-2.8764-1.0408l.1419-.0804 4.7783-2.7582a.7948.7948 0 0 0 .3927-.6813v-6.7369l2.02 1.1686a.071.071 0 0 1 .038.052v5.5826a4.504 4.504 0 0 1-4.4945 4.4944zm-9.6607-4.1254a4.4708 4.4708 0 0 1-.5346-3.0137l.142.0852 4.783 2.7582a.7712.7712 0 0 0 .7806 0l5.8428-3.3685v2.3324a.0804.0804 0 0 1-.0332.0615L9.74 19.9502a4.4992 4.4992 0 0 1-6.1408-1.6464zM2.3408 7.8956a4.485 4.485 0 0 1 2.3655-1.9728V11.6a.7664.7664 0 0 0 .3879.6765l5.8144 3.3543-2.0201 1.1685a.0757.0757 0 0 1-.071 0l-4.8303-2.7865A4.504 4.504 0 0 1 2.3408 7.8956zm16.0993 3.8558L12.5973 8.3829l2.02-1.164a.0757.0757 0 0 1 .071 0l4.8303 2.7913a4.4944 4.4944 0 0 1-.6765 8.1042v-5.6772a.79.79 0 0 0-.4018-.5816zm2.0107-3.0231l-.142-.0852-4.7735-2.7818a.7759.7759 0 0 0-.7854 0L9.409 9.2297V6.8974a.0662.0662 0 0 1 .0284-.0615l4.8303-2.7866a4.4992 4.4992 0 0 1 6.6802 4.66zM8.3065 12.863l-2.02-1.1639a.0804.0804 0 0 1-.038-.0567V6.0742a4.4992 4.4992 0 0 1 7.3757-3.4537l-.142.0805L8.704 5.459a.7948.7948 0 0 0-.3927.6813v6.7227zm1.1458-1.9213l2.552-1.472a.79.79 0 0 0 .3927-.6813V5.8452l2.552 1.472a.071.071 0 0 1 .038.0615v2.944a.79.79 0 0 0 .3927.6813l2.552 1.472-2.552 1.472a.79.79 0 0 0-.3927.6813v2.944a.071.071 0 0 1-.038.0615l-2.552-1.472a.79.79 0 0 0-.3927-.6813v-2.944a.79.79 0 0 0-.3927-.6813z"/>
+                    </svg>
+                    <span class="brand-name">ChatGPT</span>
                 </div>
-                <button class="btn-icon mobile-only" id="closeSidebarBtn" aria-label="Close sidebar">
-                    <i class="fa-solid fa-xmark"></i>
+                <button class="btn-sidebar-icon" id="closeSidebarBtn" title="Close sidebar" aria-label="Close sidebar">
+                    <i class="fa-solid fa-arrow-left-to-line"></i>
                 </button>
             </div>
 
             <div class="sidebar-actions">
                 <button class="btn-new-chat" id="newChatBtn">
-                    <i class="fa-solid fa-plus"></i>
+                    <i class="fa-regular fa-pen-to-square"></i>
                     <span>New chat</span>
                 </button>
             </div>
 
             <div class="sidebar-scrollable">
-                <!-- Personas -->
                 <div class="sidebar-group">
-                    <div class="sidebar-group-title">Personas</div>
-                    <div class="persona-list" id="personaList"></div>
-                </div>
-
-                <!-- Recent Conversations -->
-                <div class="sidebar-group">
-                    <div class="sidebar-group-title">Recent</div>
+                    <div class="sidebar-group-title">Recent chats</div>
                     <div class="sessions-list" id="sessionsList"></div>
                 </div>
             </div>
 
-            <!-- Sidebar Footer -->
             <div class="sidebar-footer">
-                <button class="sidebar-btn" id="statusModalBtn" title="System diagnostics">
-                    <i class="fa-solid fa-chart-line"></i>
-                    <span>Status</span>
-                </button>
                 <button class="sidebar-btn" id="exportChatBtn" title="Export conversation">
                     <i class="fa-regular fa-share-from-square"></i>
                     <span>Export</span>
                 </button>
                 <button class="sidebar-btn" id="clearAllBtn" title="Clear all history">
                     <i class="fa-regular fa-trash-can"></i>
-                    <span>Clear history</span>
+                    <span>Clear chats</span>
                 </button>
             </div>
         </aside>
@@ -76,20 +65,22 @@
 
         <!-- Main Content -->
         <main class="main-content">
-            <!-- Topbar -->
+            <!-- ChatGPT Header -->
             <header class="topbar">
                 <div class="topbar-left">
-                    <button class="btn-icon mobile-only" id="openSidebarBtn" aria-label="Open sidebar">
+                    <button class="btn-icon" id="openSidebarBtn" title="Toggle sidebar" aria-label="Toggle sidebar">
                         <i class="fa-solid fa-bars"></i>
                     </button>
-                    <div class="current-persona-badge" id="activePersonaBadge">
-                        <span class="persona-icon-mini" id="headerPersonaIcon">🤖</span>
-                        <span class="persona-name-text" id="headerPersonaName">General Assistant</span>
-                        <span class="model-tag" id="headerEngineBadge">Gemini 3.5 Flash</span>
+                    <div class="chatgpt-pill">
+                        <span class="chatgpt-pill-name">ChatGPT</span>
+                        <i class="fa-solid fa-chevron-down chatgpt-pill-chevron"></i>
                     </div>
                 </div>
 
                 <div class="topbar-right">
+                    <button class="btn-icon" id="topNewChatBtn" title="New chat" aria-label="New chat">
+                        <i class="fa-regular fa-pen-to-square"></i>
+                    </button>
                     <button class="btn-icon" id="settingsModalBtn" title="Settings" aria-label="Settings">
                         <i class="fa-solid fa-sliders"></i>
                     </button>
@@ -102,27 +93,31 @@
             <!-- Chat Scroll Area -->
             <div class="chat-container" id="chatContainer">
                 <div class="chat-inner">
-                    <!-- Minimal Welcome Screen -->
+                    <!-- ChatGPT Welcome Screen -->
                     <div class="welcome-screen" id="welcomeScreen">
-                        <div class="welcome-sparkle">✦</div>
-                        <h1 class="welcome-heading">How can I help you today?</h1>
+                        <div class="welcome-logo-circle">
+                            <svg viewBox="0 0 24 24" width="34" height="34" fill="currentColor">
+                                <path d="M22.2819 9.8211a5.9847 5.9847 0 0 0-.5157-4.9108 6.0462 6.0462 0 0 0-6.5098-2.9A6.0651 6.0651 0 0 0 4.9807 4.1818a5.9847 5.9847 0 0 0-3.9977 2.9 6.0462 6.0462 0 0 0 .7427 7.0966 5.98 5.98 0 0 0 .511 4.9107 6.051 6.051 0 0 0 6.5146 2.9001A5.9847 5.9847 0 0 0 13.2599 24a6.0557 6.0557 0 0 0 5.7718-4.2058 5.9894 5.9894 0 0 0 3.9977-2.9001 6.0557 6.0557 0 0 0-.7475-7.0729zm-9.022 12.6081a4.4755 4.4755 0 0 1-2.8764-1.0408l.1419-.0804 4.7783-2.7582a.7948.7948 0 0 0 .3927-.6813v-6.7369l2.02 1.1686a.071.071 0 0 1 .038.052v5.5826a4.504 4.504 0 0 1-4.4945 4.4944zm-9.6607-4.1254a4.4708 4.4708 0 0 1-.5346-3.0137l.142.0852 4.783 2.7582a.7712.7712 0 0 0 .7806 0l5.8428-3.3685v2.3324a.0804.0804 0 0 1-.0332.0615L9.74 19.9502a4.4992 4.4992 0 0 1-6.1408-1.6464zM2.3408 7.8956a4.485 4.485 0 0 1 2.3655-1.9728V11.6a.7664.7664 0 0 0 .3879.6765l5.8144 3.3543-2.0201 1.1685a.0757.0757 0 0 1-.071 0l-4.8303-2.7865A4.504 4.504 0 0 1 2.3408 7.8956zm16.0993 3.8558L12.5973 8.3829l2.02-1.164a.0757.0757 0 0 1 .071 0l4.8303 2.7913a4.4944 4.4944 0 0 1-.6765 8.1042v-5.6772a.79.79 0 0 0-.4018-.5816zm2.0107-3.0231l-.142-.0852-4.7735-2.7818a.7759.7759 0 0 0-.7854 0L9.409 9.2297V6.8974a.0662.0662 0 0 1 .0284-.0615l4.8303-2.7866a4.4992 4.4992 0 0 1 6.6802 4.66zM8.3065 12.863l-2.02-1.1639a.0804.0804 0 0 1-.038-.0567V6.0742a4.4992 4.4992 0 0 1 7.3757-3.4537l-.142.0805L8.704 5.459a.7948.7948 0 0 0-.3927.6813v6.7227zm1.1458-1.9213l2.552-1.472a.79.79 0 0 0 .3927-.6813V5.8452l2.552 1.472a.071.071 0 0 1 .038.0615v2.944a.79.79 0 0 0 .3927.6813l2.552 1.472-2.552 1.472a.79.79 0 0 0-.3927.6813v2.944a.071.071 0 0 1-.038.0615l-2.552-1.472a.79.79 0 0 0-.3927-.6813v-2.944a.79.79 0 0 0-.3927-.6813z"/>
+                            </svg>
+                        </div>
+                        <h1 class="welcome-heading">What can I help with today?</h1>
                         
                         <div class="starter-chips">
-                            <button class="starter-chip" data-prompt="Explain quantum computing in simple, intuitive terms">
-                                <span class="chip-icon">⚛️</span>
-                                <span>Explain quantum computing</span>
+                            <button class="starter-chip" data-prompt="Help me write clean, efficient code">
+                                <span class="chip-title">Write code</span>
+                                <span class="chip-desc">Clean, efficient scripts or algorithms</span>
                             </button>
-                            <button class="starter-chip" data-prompt="Write clean, idiomatic Java code for a production REST API controller">
-                                <span class="chip-icon">💻</span>
-                                <span>Write clean Java REST API</span>
+                            <button class="starter-chip" data-prompt="Explain a complex concept in simple, intuitive terms">
+                                <span class="chip-title">Explain concept</span>
+                                <span class="chip-desc">In simple, intuitive terms</span>
                             </button>
-                            <button class="starter-chip" data-prompt="Give me high-impact resume and system design interview tips for Senior Software Engineers">
-                                <span class="chip-icon">💼</span>
-                                <span>Prep for tech interview</span>
+                            <button class="starter-chip" data-prompt="Brainstorm ideas for an exciting new project">
+                                <span class="chip-title">Brainstorm ideas</span>
+                                <span class="chip-desc">For an exciting new project</span>
                             </button>
-                            <button class="starter-chip" data-prompt="Write a short, suspenseful sci-fi story about an AI that woke up">
-                                <span class="chip-icon">✍️</span>
-                                <span>Write a short sci-fi story</span>
+                            <button class="starter-chip" data-prompt="Help me write a concise, professional message">
+                                <span class="chip-title">Draft a message</span>
+                                <span class="chip-desc">Clear, polished and professional</span>
                             </button>
                         </div>
                     </div>
@@ -132,7 +127,11 @@
 
                     <!-- Typing Indicator -->
                     <div class="typing-indicator" id="typingIndicator">
-                        <div class="typing-avatar">✦</div>
+                        <div class="typing-avatar">
+                            <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+                                <path d="M22.2819 9.8211a5.9847 5.9847 0 0 0-.5157-4.9108 6.0462 6.0462 0 0 0-6.5098-2.9A6.0651 6.0651 0 0 0 4.9807 4.1818a5.9847 5.9847 0 0 0-3.9977 2.9 6.0462 6.0462 0 0 0 .7427 7.0966 5.98 5.98 0 0 0 .511 4.9107 6.051 6.051 0 0 0 6.5146 2.9001A5.9847 5.9847 0 0 0 13.2599 24a6.0557 6.0557 0 0 0 5.7718-4.2058 5.9894 5.9894 0 0 0 3.9977-2.9001 6.0557 6.0557 0 0 0-.7475-7.0729zm-9.022 12.6081a4.4755 4.4755 0 0 1-2.8764-1.0408l.1419-.0804 4.7783-2.7582a.7948.7948 0 0 0 .3927-.6813v-6.7369l2.02 1.1686a.071.071 0 0 1 .038.052v5.5826a4.504 4.504 0 0 1-4.4945 4.4944zm-9.6607-4.1254a4.4708 4.4708 0 0 1-.5346-3.0137l.142.0852 4.783 2.7582a.7712.7712 0 0 0 .7806 0l5.8428-3.3685v2.3324a.0804.0804 0 0 1-.0332.0615L9.74 19.9502a4.4992 4.4992 0 0 1-6.1408-1.6464zM2.3408 7.8956a4.485 4.485 0 0 1 2.3655-1.9728V11.6a.7664.7664 0 0 0 .3879.6765l5.8144 3.3543-2.0201 1.1685a.0757.0757 0 0 1-.071 0l-4.8303-2.7865A4.504 4.504 0 0 1 2.3408 7.8956zm16.0993 3.8558L12.5973 8.3829l2.02-1.164a.0757.0757 0 0 1 .071 0l4.8303 2.7913a4.4944 4.4944 0 0 1-.6765 8.1042v-5.6772a.79.79 0 0 0-.4018-.5816zm2.0107-3.0231l-.142-.0852-4.7735-2.7818a.7759.7759 0 0 0-.7854 0L9.409 9.2297V6.8974a.0662.0662 0 0 1 .0284-.0615l4.8303-2.7866a4.4992 4.4992 0 0 1 6.6802 4.66zM8.3065 12.863l-2.02-1.1639a.0804.0804 0 0 1-.038-.0567V6.0742a4.4992 4.4992 0 0 1 7.3757-3.4537l-.142.0805L8.704 5.459a.7948.7948 0 0 0-.3927.6813v6.7227zm1.1458-1.9213l2.552-1.472a.79.79 0 0 0 .3927-.6813V5.8452l2.552 1.472a.071.071 0 0 1 .038.0615v2.944a.79.79 0 0 0 .3927.6813l2.552 1.472-2.552 1.472a.79.79 0 0 0-.3927.6813v2.944a.071.071 0 0 1-.038.0615l-2.552-1.472a.79.79 0 0 0-.3927-.6813v-2.944a.79.79 0 0 0-.3927-.6813z"/>
+                            </svg>
+                        </div>
                         <div class="typing-dots">
                             <span></span>
                             <span></span>
@@ -142,7 +141,7 @@
                 </div>
             </div>
 
-            <!-- Minimal Input Area -->
+            <!-- ChatGPT Floating Input Area -->
             <footer class="input-area">
                 <div class="input-capsule">
                     <button class="btn-action-mic" id="voiceInputBtn" title="Voice input" aria-label="Voice input">
@@ -150,7 +149,7 @@
                     </button>
                     <textarea 
                         id="chatInput" 
-                        placeholder="Message Nova..." 
+                        placeholder="Message ChatGPT..." 
                         rows="1"
                         autofocus
                     ></textarea>
@@ -159,7 +158,7 @@
                     </button>
                 </div>
                 <div class="input-disclaimer">
-                    Nova can make mistakes. Verify important info.
+                    ChatGPT can make mistakes. Check important info.
                 </div>
             </footer>
         </main>
@@ -174,87 +173,26 @@
             </div>
             <div class="modal-body">
                 <div class="form-group">
-                    <label for="providerSelect">Model Provider</label>
+                    <label for="providerSelect">AI Model Engine</label>
                     <select id="providerSelect" class="form-control">
-                        <option value="gemini">Google Gemini (Gemini 3.5 Flash — Default)</option>
-                        <option value="builtin">Nova Smart Engine (Free, No Key Needed)</option>
-                        <option value="openai">OpenAI (GPT-4o, GPT-3.5)</option>
+                        <option value="gemini">Google Gemini (Default)</option>
+                        <option value="builtin">Nova Smart Engine (Free, Offline Ready)</option>
+                        <option value="openai">OpenAI (Custom Key)</option>
                     </select>
                 </div>
 
                 <div class="form-group" id="apiKeyGroup">
-                    <label for="apiKeyInput">API Key</label>
+                    <label for="apiKeyInput">API Key (Optional)</label>
                     <div class="password-wrapper">
                         <input type="password" id="apiKeyInput" class="form-control" placeholder="API key...">
                         <button type="button" class="btn-eye" id="toggleApiKeyVisibility"><i class="fa-solid fa-eye"></i></button>
                     </div>
-                    <small class="form-hint">Stored safely in your browser's local storage.</small>
-                </div>
-
-                <div class="form-group" id="modelGroup">
-                    <label for="modelInput">Model Name</label>
-                    <input type="text" id="modelInput" class="form-control" placeholder="gemini-3.5-flash or gpt-4o-mini">
-                </div>
-
-                <div class="form-group">
-                    <label for="toneSelect">Response Tone & Style</label>
-                    <select id="toneSelect" class="form-control">
-                        <option value="detailed">Balanced & Detailed (Default)</option>
-                        <option value="concise">Concise & Direct (Brief)</option>
-                        <option value="technical">Senior Staff Engineer (In-depth & Technical)</option>
-                        <option value="mentor">Friendly Mentor (Guided & Explanatory)</option>
-                    </select>
-                </div>
-
-                <div class="form-group">
-                    <div class="slider-header">
-                        <label for="tempSlider">Creativity / Temperature</label>
-                        <span id="tempValue" class="temp-badge">0.7</span>
-                    </div>
-                    <input type="range" id="tempSlider" min="0" max="1" step="0.1" value="0.7">
+                    <small class="form-hint">Stored safely in local storage.</small>
                 </div>
             </div>
             <div class="modal-footer">
                 <button class="btn-secondary" id="resetSettingsBtn">Reset</button>
                 <button class="btn-primary" id="saveSettingsBtn">Save</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- System Diagnostics Modal -->
-    <div class="modal" id="statusModal">
-        <div class="modal-card">
-            <div class="modal-header">
-                <h3>System Diagnostics</h3>
-                <button class="btn-icon" id="closeStatusModal"><i class="fa-solid fa-xmark"></i></button>
-            </div>
-            <div class="modal-body">
-                <div class="diag-grid">
-                    <div class="diag-card">
-                        <span class="diag-label">Application</span>
-                        <span class="diag-val" id="diagAppName">NovaAI Chatbot</span>
-                    </div>
-                    <div class="diag-card">
-                        <span class="diag-label">Runtime</span>
-                        <span class="diag-val" id="diagJavaVersion">Ready</span>
-                    </div>
-                    <div class="diag-card">
-                        <span class="diag-label">Memory Usage</span>
-                        <span class="diag-val" id="diagMemory">-- MB</span>
-                    </div>
-                    <div class="diag-card">
-                        <span class="diag-label">Uptime</span>
-                        <span class="diag-val" id="diagUptime">-- s</span>
-                    </div>
-                    <div class="diag-card">
-                        <span class="diag-label">Active Sessions</span>
-                        <span class="diag-val" id="diagSessions">0</span>
-                    </div>
-                    <div class="diag-card">
-                        <span class="diag-label">Available Personas</span>
-                        <span class="diag-val" id="diagPersonas">5</span>
-                    </div>
-                </div>
             </div>
         </div>
     </div>
