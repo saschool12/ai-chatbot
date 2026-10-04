@@ -7,11 +7,12 @@ function estimateTokens(text) {
 }
 
 async function callGemini(apiKey, model, systemPrompt, history, userMessage) {
-  const modelsToTry = [model || 'gemini-3.5-flash', 'gemini-flash-lite-latest', 'gemini-3.1-flash-lite'];
+  if (!apiKey || !apiKey.trim()) return null;
+  const modelsToTry = [model, 'gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-flash-lite-latest'].filter(Boolean);
   
   for (const mod of modelsToTry) {
     try {
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/${mod}:generateContent?key=${apiKey}`;
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${mod}:generateContent?key=${encodeURIComponent(apiKey.trim())}`;
       const contents = [];
       const recent = (history || []).slice(-6);
       for (const m of recent) {
@@ -122,61 +123,69 @@ module.exports = async (req, res) => {
   addMessage(sessionId, userMsg);
 
   let provider = (body.provider || 'gemini').toLowerCase();
-  let model = body.model || 'gemini-3.5-flash';
+  let model = body.model || 'gemini-2.5-flash';
   let replyText = null;
 
   try {
-    if (provider === 'openai' && body.apiKey) {
-      const messages = [
-        { role: 'system', content: personaObj.systemPrompt },
-        ...session.messages.slice(-8).map(m => ({ role: m.role, content: m.content })),
-        { role: 'user', content: message }
-      ];
-
-      const resp = await fetch('https://api.openai.com/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${body.apiKey}`
-        },
-        body: JSON.stringify({
-          model: body.model || 'gpt-4o-mini',
-          messages: messages,
-          temperature: body.temperature || 0.7
-        })
-      });
-
-      if (resp.ok) {
-        const data = await resp.json();
-        replyText = data.choices?.[0]?.message?.content;
-      }
-    }
-
-    if (!replyText) {
-      // Primary: Google Gemini 3.5 Flash
-      const geminiKey = body.apiKey && body.apiKey.startsWith('AQ.') ? body.apiKey : DEFAULT_GEMINI_KEY;
-      replyText = await callGemini(geminiKey, model, personaObj.systemPrompt, session.messages, message);
-      if (replyText) {
-        provider = 'gemini';
-        model = 'gemini-3.5-flash';
-      }
-    }
-
-    if (!replyText) {
-      // Secondary: Free OpenAI-compatible LLM
-      const historyWithNew = [...session.messages.slice(-6), userMsg];
-      replyText = await callFreeLlm(historyWithNew, personaObj.systemPrompt);
-      if (replyText) {
-        provider = 'nova-llm';
-        model = 'gpt-oss-20b';
-      }
-    }
-
-    if (!replyText) {
-      // Tertiary: Built-in local rule engine
+    if (provider === 'builtin') {
       replyText = generateReply(message, personaId);
       provider = 'builtin';
-      model = 'Nova-Neural-Fallback';
+      model = 'Nova-Neural-v1';
+    } else {
+      if (provider === 'openai' && body.apiKey && body.apiKey.trim()) {
+        const messages = [
+          { role: 'system', content: personaObj.systemPrompt },
+          ...session.messages.slice(-8).map(m => ({ role: m.role, content: m.content })),
+          { role: 'user', content: message }
+        ];
+
+        const resp = await fetch('https://api.openai.com/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${body.apiKey.trim()}`
+          },
+          body: JSON.stringify({
+            model: body.model || 'gpt-4o-mini',
+            messages: messages,
+            temperature: body.temperature || 0.7
+          })
+        });
+
+        if (resp.ok) {
+          const data = await resp.json();
+          replyText = data.choices?.[0]?.message?.content;
+        }
+      }
+
+      if (!replyText) {
+        // Primary: Google Gemini
+        const geminiKey = (body.apiKey && body.apiKey.trim()) ? body.apiKey.trim() : DEFAULT_GEMINI_KEY;
+        if (geminiKey) {
+          replyText = await callGemini(geminiKey, model, personaObj.systemPrompt, session.messages, message);
+          if (replyText) {
+            provider = 'gemini';
+            model = model || 'gemini-2.5-flash';
+          }
+        }
+      }
+
+      if (!replyText) {
+        // Secondary: Free OpenAI-compatible LLM
+        const historyWithNew = [...session.messages.slice(-6), userMsg];
+        replyText = await callFreeLlm(historyWithNew, personaObj.systemPrompt);
+        if (replyText) {
+          provider = 'nova-llm';
+          model = 'gpt-oss-20b';
+        }
+      }
+
+      if (!replyText) {
+        // Tertiary: Built-in local rule engine
+        replyText = generateReply(message, personaId);
+        provider = 'builtin';
+        model = 'Nova-Neural-Fallback';
+      }
     }
   } catch (err) {
     replyText = generateReply(message, personaId);

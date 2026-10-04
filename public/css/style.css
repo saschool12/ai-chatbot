@@ -1063,6 +1063,38 @@ input[type="range"] {
     color: var(--text-muted);
 }
 
+/* System Diagnostics Grid */
+.diag-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem;
+}
+
+.diag-card {
+    background-color: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 0.75rem 0.85rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.diag-label {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    font-weight: 500;
+}
+
+.diag-val {
+    font-size: 0.9rem;
+    color: var(--text-main);
+    font-weight: 600;
+    font-family: 'JetBrains Mono', monospace;
+}
+
 /* Mobile Responsive */
 @media (max-width: 768px) {
     .mobile-only {

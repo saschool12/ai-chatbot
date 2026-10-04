@@ -56,13 +56,17 @@
 
             <!-- Sidebar Footer -->
             <div class="sidebar-footer">
-                <button class="sidebar-btn" id="clearAllBtn" title="Clear all history">
-                    <i class="fa-regular fa-trash-can"></i>
-                    <span>Clear history</span>
+                <button class="sidebar-btn" id="statusModalBtn" title="System diagnostics">
+                    <i class="fa-solid fa-chart-line"></i>
+                    <span>Status</span>
                 </button>
                 <button class="sidebar-btn" id="exportChatBtn" title="Export conversation">
                     <i class="fa-regular fa-share-from-square"></i>
                     <span>Export</span>
+                </button>
+                <button class="sidebar-btn" id="clearAllBtn" title="Clear all history">
+                    <i class="fa-regular fa-trash-can"></i>
+                    <span>Clear history</span>
                 </button>
             </div>
         </aside>
@@ -203,6 +207,44 @@
             <div class="modal-footer">
                 <button class="btn-secondary" id="resetSettingsBtn">Reset</button>
                 <button class="btn-primary" id="saveSettingsBtn">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- System Diagnostics Modal -->
+    <div class="modal" id="statusModal">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3>System Diagnostics</h3>
+                <button class="btn-icon" id="closeStatusModal"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body">
+                <div class="diag-grid">
+                    <div class="diag-card">
+                        <span class="diag-label">Application</span>
+                        <span class="diag-val" id="diagAppName">NovaAI Chatbot</span>
+                    </div>
+                    <div class="diag-card">
+                        <span class="diag-label">Runtime</span>
+                        <span class="diag-val" id="diagJavaVersion">Ready</span>
+                    </div>
+                    <div class="diag-card">
+                        <span class="diag-label">Memory Usage</span>
+                        <span class="diag-val" id="diagMemory">-- MB</span>
+                    </div>
+                    <div class="diag-card">
+                        <span class="diag-label">Uptime</span>
+                        <span class="diag-val" id="diagUptime">-- s</span>
+                    </div>
+                    <div class="diag-card">
+                        <span class="diag-label">Active Sessions</span>
+                        <span class="diag-val" id="diagSessions">0</span>
+                    </div>
+                    <div class="diag-card">
+                        <span class="diag-label">Available Personas</span>
+                        <span class="diag-val" id="diagPersonas">5</span>
+                    </div>
+                </div>
             </div>
         </div>
     </div>

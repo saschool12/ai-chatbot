@@ -63,7 +63,18 @@ document.addEventListener('DOMContentLoaded', () => {
         exportChatBtn: document.getElementById('exportChatBtn'),
         closeExportModal: document.getElementById('closeExportModal'),
         exportMarkdownBtn: document.getElementById('exportMarkdownBtn'),
-        exportJsonBtn: document.getElementById('exportJsonBtn')
+        exportJsonBtn: document.getElementById('exportJsonBtn'),
+
+        // Status Modal
+        statusModal: document.getElementById('statusModal'),
+        statusModalBtn: document.getElementById('statusModalBtn'),
+        closeStatusModal: document.getElementById('closeStatusModal'),
+        diagAppName: document.getElementById('diagAppName'),
+        diagJavaVersion: document.getElementById('diagJavaVersion'),
+        diagMemory: document.getElementById('diagMemory'),
+        diagUptime: document.getElementById('diagUptime'),
+        diagSessions: document.getElementById('diagSessions'),
+        diagPersonas: document.getElementById('diagPersonas')
     };
 
     // Configure Marked.js
@@ -276,13 +287,87 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    const PERSONA_CONFIGS = {
+        general: {
+            heading: 'How can I help you today?',
+            chips: [
+                { icon: '⚛️', text: 'Explain quantum computing', prompt: 'Explain quantum computing in simple, intuitive terms with everyday analogies.' },
+                { icon: '💻', text: 'Write clean Java REST API', prompt: 'Write clean, idiomatic Java code for a production REST API controller using Spring Boot 3.' },
+                { icon: '💼', text: 'Prep for tech interview', prompt: 'Give me high-impact resume and system design interview tips for Senior Software Engineers.' },
+                { icon: '✍️', text: 'Write a short sci-fi story', prompt: 'Write a short, suspenseful sci-fi story about an AI that woke up.' }
+            ]
+        },
+        coder: {
+            heading: 'What are we building today?',
+            chips: [
+                { icon: '☕', text: 'Spring Boot REST Controller', prompt: 'Show me an idiomatic Spring Boot 3 REST controller with validation, exception handling, and service injection.' },
+                { icon: '⚡', text: 'Debug ConcurrentModification', prompt: 'Why does ConcurrentModificationException happen in Java and what are the best ways to fix it?' },
+                { icon: '📐', text: 'Microservices Saga Pattern', prompt: 'Explain the Saga pattern for distributed transactions in microservices with choreography vs orchestration.' },
+                { icon: '🔄', text: 'LRU Cache Implementation', prompt: 'Implement an efficient LRU Cache in Java with O(1) get and put operations.' }
+            ]
+        },
+        science: {
+            heading: 'What shall we explore today?',
+            chips: [
+                { icon: '🌌', text: 'Quantum Entanglement', prompt: 'Explain quantum entanglement, Bell\'s theorem, and why Einstein called it spooky action at a distance.' },
+                { icon: '📐', text: 'Integration by Parts', prompt: 'Walk through integration by parts step-by-step with an illustrative, practical calculus example.' },
+                { icon: '🧬', text: 'How CRISPR Works', prompt: 'Explain the molecular mechanism of CRISPR-Cas9 gene editing and its modern medical applications.' },
+                { icon: '🕳️', text: 'Black Hole Event Horizons', prompt: 'Explain what happens at the event horizon of a black hole, gravitational time dilation, and Hawking radiation.' }
+            ]
+        },
+        writer: {
+            heading: 'What shall we write today?',
+            chips: [
+                { icon: '📖', text: 'Cyberpunk Story Prologue', prompt: 'Write a gripping prologue for a cyberpunk noir story set in Neo-Kyoto in 2089.' },
+                { icon: '✉️', text: 'Product Launch Email', prompt: 'Draft a compelling, high-converting product launch email for an innovative developer tool.' },
+                { icon: '🎭', text: 'Character Sketches', prompt: 'Create three compelling, psychologically distinct character profiles for a sci-fi mystery.' },
+                { icon: '📜', text: 'Poem on Rain & Neon', prompt: 'Compose an evocative poem capturing the melancholy of rain-soaked neon city streets at midnight.' }
+            ]
+        },
+        career: {
+            heading: 'How can I advance your career today?',
+            chips: [
+                { icon: '📄', text: 'Senior Engineer Resume Bullets', prompt: 'Provide 5 high-impact, metrics-driven resume bullet points using the Google XYZ formula for a Senior Backend Engineer.' },
+                { icon: '🎯', text: 'STAR Behavioral Interview', prompt: 'How do I answer "Tell me about a time you had a technical disagreement with a team lead" using the STAR method?' },
+                { icon: '💼', text: 'Salary Negotiation Script', prompt: 'Give me a polite but firm salary negotiation script for countering an initial offer for a tech lead role.' },
+                { icon: '🗺️', text: 'System Design Study Plan', prompt: 'Give me a structured 4-week roadmap to prepare for Senior/Staff System Design interviews.' }
+            ]
+        }
+    };
+
+    function renderWelcomeScreen(personaId) {
+        if (!elements.welcomeScreen) return;
+        const conf = PERSONA_CONFIGS[personaId] || PERSONA_CONFIGS.general;
+        const headingEl = elements.welcomeScreen.querySelector('.welcome-heading');
+        if (headingEl) headingEl.textContent = conf.heading;
+
+        const chipsContainer = elements.welcomeScreen.querySelector('.starter-chips');
+        if (chipsContainer) {
+            chipsContainer.innerHTML = conf.chips.map(c => `
+                <button class="starter-chip" data-prompt="${escapeHtml(c.prompt)}">
+                    <span class="chip-icon">${c.icon}</span>
+                    <span>${escapeHtml(c.text)}</span>
+                </button>
+            `).join('');
+
+            chipsContainer.querySelectorAll('.starter-chip').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const prompt = btn.getAttribute('data-prompt');
+                    sendMessage(prompt);
+                });
+            });
+        }
+    }
+
     // Render Messages Feed
     function renderMessages(messages) {
         state.currentMessages = messages || [];
         if (!elements.messagesList) return;
         elements.messagesList.innerHTML = '';
 
-        if (!messages || messages.length === 0) {
+        const hasUserMessage = state.currentMessages.some(m => m.role === 'user');
+        if (!hasUserMessage) {
+            renderWelcomeScreen(state.persona);
             if (elements.welcomeScreen) elements.welcomeScreen.style.display = 'flex';
         } else {
             if (elements.welcomeScreen) elements.welcomeScreen.style.display = 'none';
@@ -693,8 +778,36 @@ document.addEventListener('DOMContentLoaded', () => {
         URL.revokeObjectURL(url);
     }
 
+    // Status Modal
+    if (elements.statusModalBtn) {
+        elements.statusModalBtn.addEventListener('click', async () => {
+            try {
+                const res = await fetch('/api/status');
+                if (res.ok) {
+                    const data = await res.json();
+                    if (elements.diagAppName) elements.diagAppName.textContent = (data.application || 'NovaAI') + ' v' + (data.version || '1.0');
+                    if (elements.diagJavaVersion) elements.diagJavaVersion.textContent = data.javaVersion || 'Ready';
+                    if (elements.diagMemory) elements.diagMemory.textContent = `${data.usedMemoryMb || 0} MB / ${data.totalMemoryMb || 0} MB`;
+                    if (elements.diagUptime) elements.diagUptime.textContent = `${data.uptimeSeconds || 0}s`;
+                    if (elements.diagSessions) elements.diagSessions.textContent = data.activeSessions || 0;
+                    if (elements.diagPersonas) elements.diagPersonas.textContent = data.availablePersonas || 5;
+                }
+            } catch (err) {
+                console.error(err);
+            }
+            elements.statusModal?.classList.add('show');
+        });
+    }
+
+    if (elements.closeStatusModal) {
+        elements.closeStatusModal.addEventListener('click', () => {
+            elements.statusModal?.classList.remove('show');
+        });
+    }
+
     window.addEventListener('click', (e) => {
         if (e.target === elements.settingsModal) elements.settingsModal.classList.remove('show');
+        if (e.target === elements.statusModal) elements.statusModal.classList.remove('show');
         if (e.target === elements.exportModal) elements.exportModal.classList.remove('show');
     });
 

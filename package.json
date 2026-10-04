@@ -2,7 +2,11 @@
   "name": "ai-chatbot",
   "version": "1.0.0",
   "description": "NovaAI Chatbot - Full-stack Spring Boot & Vercel Serverless AI Chatbot",
-  "private": true,
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js",
+    "test": "node --test test/*.test.js"
+  },
   "engines": {
     "node": ">=18.x"
   }
