@@ -8,18 +8,94 @@ document.addEventListener('DOMContentLoaded', () => {
         </svg>
     `;
 
+    // Personas and dynamic prompt configurations
+    const PERSONAS = [
+        {
+            id: 'general',
+            name: 'ChatGPT',
+            fullName: 'General Assistant',
+            icon: '🤖',
+            description: 'Smart, versatile AI companion for everyday queries.',
+            heading: 'What can I help with today?',
+            chips: [
+                { title: 'Write code', desc: 'Clean, efficient scripts or algorithms', prompt: 'Help me write clean, efficient code' },
+                { title: 'Explain concept', desc: 'In simple, intuitive terms', prompt: 'Explain a complex concept in simple, intuitive terms' },
+                { title: 'Brainstorm ideas', desc: 'For an exciting new project', prompt: 'Brainstorm ideas for an exciting new project' },
+                { title: 'Draft a message', desc: 'Clear, polished and professional', prompt: 'Help me write a concise, professional message' }
+            ]
+        },
+        {
+            id: 'coder',
+            name: 'Code Master',
+            fullName: 'Code Master',
+            icon: '💻',
+            description: 'Specialist in Java, Spring Boot, architecture & algorithms.',
+            heading: 'What are we building today?',
+            chips: [
+                { title: 'Spring Boot REST API', desc: 'Controller with validation & DI', prompt: 'Show me an idiomatic Spring Boot 3 REST controller with validation, exception handling, and service injection.' },
+                { title: 'Debug Concurrency', desc: 'Fix ConcurrentModification in Java', prompt: 'Why does ConcurrentModificationException happen in Java and what are the best ways to fix it?' },
+                { title: 'Microservice Saga', desc: 'Choreography vs orchestration', prompt: 'Explain the Saga pattern for distributed transactions in microservices with choreography vs orchestration.' },
+                { title: 'LRU Cache in Java', desc: 'O(1) get & put implementation', prompt: 'Implement an efficient LRU Cache in Java with O(1) get and put operations.' }
+            ]
+        },
+        {
+            id: 'science',
+            name: 'Science Tutor',
+            fullName: 'Science & Math Tutor',
+            icon: '🔬',
+            description: 'Explains physics, calculus formulas & scientific concepts.',
+            heading: 'What shall we explore today?',
+            chips: [
+                { title: 'Quantum Computing', desc: 'Superposition & qubits simply explained', prompt: 'Explain quantum computing and superposition in simple, intuitive terms with everyday analogies.' },
+                { title: 'Calculus Integration', desc: 'Step-by-step integration by parts', prompt: 'Walk through integration by parts step-by-step with an illustrative, practical calculus example.' },
+                { title: 'How CRISPR Works', desc: 'Gene editing mechanisms & medicine', prompt: 'Explain the molecular mechanism of CRISPR-Cas9 gene editing and its modern medical applications.' },
+                { title: 'Black Holes', desc: 'Event horizons & Hawking radiation', prompt: 'Explain what happens at the event horizon of a black hole, gravitational time dilation, and Hawking radiation.' }
+            ]
+        },
+        {
+            id: 'writer',
+            name: 'Creative Writer',
+            fullName: 'Creative Writer',
+            icon: '✍️',
+            description: 'Storytelling, evocative poetry, and persuasive copy.',
+            heading: 'What shall we write today?',
+            chips: [
+                { title: 'Cyberpunk Story', desc: 'Gripping prologue in Neo-Kyoto', prompt: 'Write a gripping prologue for a cyberpunk noir story set in Neo-Kyoto in 2089.' },
+                { title: 'Launch Email', desc: 'High-converting announcement copy', prompt: 'Draft a compelling, high-converting product launch email for an innovative developer tool.' },
+                { title: 'Character Profiles', desc: 'Three distinct sci-fi personalities', prompt: 'Create three compelling, psychologically distinct character profiles for a sci-fi mystery.' },
+                { title: 'Poem on Rain & Neon', desc: 'Atmospheric midnight city verse', prompt: 'Compose an evocative poem capturing the melancholy of rain-soaked neon city streets at midnight.' }
+            ]
+        },
+        {
+            id: 'career',
+            name: 'Career Coach',
+            fullName: 'Career & Business Coach',
+            icon: '💼',
+            description: 'Resume reviews, STAR interview prep & executive strategy.',
+            heading: 'How can I advance your career today?',
+            chips: [
+                { title: 'Google XYZ Resume Bullets', desc: '5 high-impact metrics-driven points', prompt: 'Provide 5 high-impact, metrics-driven resume bullet points using the Google XYZ formula for a Senior Backend Engineer.' },
+                { title: 'STAR Behavioral Answer', desc: 'Technical disagreement interview prep', prompt: 'How do I answer "Tell me about a time you had a technical disagreement with a team lead" using the STAR method?' },
+                { title: 'Salary Negotiation', desc: 'Polite, firm counter-offer script', prompt: 'Give me a polite but firm salary negotiation script for countering an initial offer for a tech lead role.' },
+                { title: 'System Design Roadmap', desc: '4-week prep for Senior interviews', prompt: 'Give me a structured 4-week roadmap to prepare for Senior/Staff System Design interviews.' }
+            ]
+        }
+    ];
+
     // State
     const state = {
         sessionId: localStorage.getItem('nova_session_id') || null,
-        persona: 'general',
+        persona: localStorage.getItem('nova_persona') || 'general',
         provider: localStorage.getItem('nova_provider') || 'gemini',
         apiKey: localStorage.getItem('nova_api_key') || DEFAULT_KEY,
         model: localStorage.getItem('nova_model') || 'gemini-2.5-flash',
-        temperature: 0.7,
+        tone: localStorage.getItem('nova_tone') || 'detailed',
+        temperature: parseFloat(localStorage.getItem('nova_temperature') || '0.7'),
         theme: localStorage.getItem('nova_theme') || 'dark',
         currentMessages: [],
         isGenerating: false,
-        isRecording: false
+        isRecording: false,
+        abortController: null
     };
 
     // DOM Elements
@@ -35,8 +111,15 @@ document.addEventListener('DOMContentLoaded', () => {
         sessionsList: document.getElementById('sessionsList'),
         clearAllBtn: document.getElementById('clearAllBtn'),
         
+        // Model & Persona Dropdown
+        modelPillBtn: document.getElementById('modelPillBtn'),
+        currentPersonaName: document.getElementById('currentPersonaName'),
+        modelDropdown: document.getElementById('modelDropdown'),
+        modelOptions: document.getElementById('modelOptions'),
+
         chatContainer: document.getElementById('chatContainer'),
         welcomeScreen: document.getElementById('welcomeScreen'),
+        starterChips: document.getElementById('starterChips'),
         messagesList: document.getElementById('messagesList'),
         typingIndicator: document.getElementById('typingIndicator'),
         
@@ -53,15 +136,34 @@ document.addEventListener('DOMContentLoaded', () => {
         apiKeyGroup: document.getElementById('apiKeyGroup'),
         apiKeyInput: document.getElementById('apiKeyInput'),
         toggleApiKeyVisibility: document.getElementById('toggleApiKeyVisibility'),
+        modelInput: document.getElementById('modelInput'),
+        toneSelect: document.getElementById('toneSelect'),
+        tempSlider: document.getElementById('tempSlider'),
+        tempValue: document.getElementById('tempValue'),
         saveSettingsBtn: document.getElementById('saveSettingsBtn'),
         resetSettingsBtn: document.getElementById('resetSettingsBtn'),
         
+        // Status / Diagnostics Modal
+        statusModal: document.getElementById('statusModal'),
+        statusModalBtn: document.getElementById('statusModalBtn'),
+        closeStatusModal: document.getElementById('closeStatusModal'),
+        diagAppName: document.getElementById('diagAppName'),
+        diagJavaVersion: document.getElementById('diagJavaVersion'),
+        diagMemory: document.getElementById('diagMemory'),
+        diagUptime: document.getElementById('diagUptime'),
+        diagSessions: document.getElementById('diagSessions'),
+        diagPersonas: document.getElementById('diagPersonas'),
+
         // Export Modal
         exportModal: document.getElementById('exportModal'),
         exportChatBtn: document.getElementById('exportChatBtn'),
         closeExportModal: document.getElementById('closeExportModal'),
         exportMarkdownBtn: document.getElementById('exportMarkdownBtn'),
-        exportJsonBtn: document.getElementById('exportJsonBtn')
+        exportJsonBtn: document.getElementById('exportJsonBtn'),
+
+        // Toast
+        toastNotification: document.getElementById('toastNotification'),
+        toastText: document.getElementById('toastText')
     };
 
     // Configure Marked.js
@@ -81,6 +183,18 @@ document.addEventListener('DOMContentLoaded', () => {
                 return code;
             }
         });
+    }
+
+    // Toast Notification helper
+    let toastTimeout = null;
+    function showToast(message) {
+        if (!elements.toastNotification || !elements.toastText) return;
+        elements.toastText.textContent = message;
+        elements.toastNotification.classList.add('show');
+        if (toastTimeout) clearTimeout(toastTimeout);
+        toastTimeout = setTimeout(() => {
+            elements.toastNotification.classList.remove('show');
+        }, 2200);
     }
 
     // Theme Management
@@ -125,6 +239,102 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // Model & Persona Dropdown
+    function renderModelDropdown() {
+        if (!elements.modelOptions) return;
+        elements.modelOptions.innerHTML = '';
+
+        PERSONAS.forEach(p => {
+            const btn = document.createElement('button');
+            btn.className = `model-option ${p.id === state.persona ? 'active' : ''}`;
+            btn.innerHTML = `
+                <div class="model-option-left">
+                    <span class="model-option-icon">${p.icon}</span>
+                    <div class="model-option-info">
+                        <span class="model-option-title">${escapeHtml(p.name)}</span>
+                        <span class="model-option-desc">${escapeHtml(p.description)}</span>
+                    </div>
+                </div>
+                <i class="fa-solid fa-check model-option-check"></i>
+            `;
+
+            btn.addEventListener('click', () => {
+                selectPersona(p.id);
+                closeModelDropdown();
+            });
+
+            elements.modelOptions.appendChild(btn);
+        });
+
+        updatePersonaDisplay();
+    }
+
+    function toggleModelDropdown(e) {
+        if (e) e.stopPropagation();
+        const isOpen = elements.modelDropdown?.classList.contains('show');
+        if (isOpen) {
+            closeModelDropdown();
+        } else {
+            elements.modelDropdown?.classList.add('show');
+            elements.modelPillBtn?.setAttribute('aria-expanded', 'true');
+        }
+    }
+
+    function closeModelDropdown() {
+        elements.modelDropdown?.classList.remove('show');
+        elements.modelPillBtn?.setAttribute('aria-expanded', 'false');
+    }
+
+    if (elements.modelPillBtn) {
+        elements.modelPillBtn.addEventListener('click', toggleModelDropdown);
+    }
+
+    function selectPersona(personaId) {
+        state.persona = personaId;
+        localStorage.setItem('nova_persona', personaId);
+        updatePersonaDisplay();
+
+        const hasUserMessage = state.currentMessages && state.currentMessages.some(m => m.role === 'user');
+        if (!hasUserMessage) {
+            renderWelcomeScreen(personaId);
+        }
+        renderModelDropdown();
+    }
+
+    function updatePersonaDisplay() {
+        const current = PERSONAS.find(p => p.id === state.persona) || PERSONAS[0];
+        if (elements.currentPersonaName) {
+            elements.currentPersonaName.textContent = current.name;
+        }
+    }
+
+    // Dynamic Welcome Screen
+    function renderWelcomeScreen(personaId) {
+        if (!elements.welcomeScreen) return;
+        const conf = PERSONAS.find(p => p.id === personaId) || PERSONAS[0];
+
+        const headingEl = elements.welcomeScreen.querySelector('.welcome-heading');
+        if (headingEl) {
+            headingEl.textContent = conf.heading;
+        }
+
+        if (elements.starterChips) {
+            elements.starterChips.innerHTML = conf.chips.map(chip => `
+                <button class="starter-chip" data-prompt="${escapeHtml(chip.prompt)}">
+                    <span class="chip-title">${escapeHtml(chip.title)}</span>
+                    <span class="chip-desc">${escapeHtml(chip.desc)}</span>
+                </button>
+            `).join('');
+
+            elements.starterChips.querySelectorAll('.starter-chip').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const prompt = btn.getAttribute('data-prompt');
+                    sendMessage(prompt);
+                });
+            });
+        }
+    }
+
     // Load Sessions
     async function loadSessions() {
         try {
@@ -159,14 +369,16 @@ document.addEventListener('DOMContentLoaded', () => {
             if (sess.messages && sess.messages.length > 0) {
                 const firstUser = sess.messages.find(m => m.role === 'user');
                 if (firstUser && firstUser.content) {
-                    title = firstUser.content.trim().slice(0, 28);
-                    if (firstUser.content.length > 28) title += '...';
+                    title = firstUser.content.trim().slice(0, 26);
+                    if (firstUser.content.length > 26) title += '...';
                 }
             }
 
+            const personaIcon = (PERSONAS.find(p => p.id === sess.persona) || PERSONAS[0]).icon;
+
             item.innerHTML = `
                 <div class="session-title-wrap">
-                    <i class="fa-regular fa-message"></i>
+                    <span style="font-size:0.85rem; margin-right:2px;">${personaIcon}</span>
                     <span class="session-text">${escapeHtml(title)}</span>
                 </div>
                 <button class="btn-delete-session" title="Delete chat">
@@ -194,6 +406,11 @@ document.addEventListener('DOMContentLoaded', () => {
             const data = await response.json();
             state.sessionId = data.id;
             localStorage.setItem('nova_session_id', data.id);
+
+            if (data.persona && data.persona !== state.persona) {
+                selectPersona(data.persona);
+            }
+
             renderMessages(data.messages || []);
             loadSessions();
 
@@ -214,6 +431,7 @@ document.addEventListener('DOMContentLoaded', () => {
             } else {
                 loadSessions();
             }
+            showToast('Chat deleted');
         } catch (err) {
             // Handled
         }
@@ -241,6 +459,7 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             await fetch('/api/clear', { method: 'POST' });
             createNewChat();
+            showToast('History cleared');
         } catch (err) {
             // Handled
         }
@@ -254,15 +473,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const hasUserMessage = state.currentMessages.some(m => m.role === 'user');
         if (!hasUserMessage) {
+            renderWelcomeScreen(state.persona);
             if (elements.welcomeScreen) elements.welcomeScreen.style.display = 'flex';
         } else {
             if (elements.welcomeScreen) elements.welcomeScreen.style.display = 'none';
-            messages.forEach(msg => appendMessageToFeed(msg, false));
+            messages.forEach((msg, idx) => appendMessageToFeed(msg, false, idx));
             scrollToBottom();
         }
     }
 
-    function appendMessageToFeed(msg, scroll = true) {
+    function appendMessageToFeed(msg, scroll = true, msgIndex = -1) {
         if (elements.welcomeScreen) elements.welcomeScreen.style.display = 'none';
         const item = document.createElement('div');
         item.className = `message-item ${msg.role}`;
@@ -275,15 +495,21 @@ document.addEventListener('DOMContentLoaded', () => {
             formattedContent = window.marked ? marked.parse(msg.content) : `<p>${escapeHtml(msg.content)}</p>`;
         }
 
-        // ChatGPT Action Buttons below response
-        const actionsHtml = !isUser ? `
+        // ChatGPT Action Buttons
+        const actionsHtml = isUser ? `
+            <div class="message-actions user-actions">
+                <button class="btn-msg-action btn-copy-msg" title="Copy text"><i class="fa-regular fa-copy"></i></button>
+                <button class="btn-msg-action btn-edit-msg" title="Edit message"><i class="fa-regular fa-pen-to-square"></i></button>
+            </div>
+        ` : `
             <div class="message-actions">
                 <button class="btn-msg-action btn-copy-msg" title="Copy response"><i class="fa-regular fa-copy"></i></button>
+                <button class="btn-msg-action btn-regenerate-msg" title="Regenerate response"><i class="fa-solid fa-arrows-rotate"></i></button>
                 <button class="btn-msg-action btn-like-msg" title="Good response"><i class="fa-regular fa-thumbs-up"></i></button>
                 <button class="btn-msg-action btn-dislike-msg" title="Bad response"><i class="fa-regular fa-thumbs-down"></i></button>
                 <button class="btn-msg-action btn-speak-msg" title="Read aloud"><i class="fa-solid fa-volume-high"></i></button>
             </div>
-        ` : '';
+        `;
 
         item.innerHTML = `
             ${!isUser ? `<div class="message-avatar">${CHATGPT_SVG}</div>` : ''}
@@ -293,8 +519,32 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
         `;
 
-        // Wrap pre > code blocks with syntax copy headers
+        // User message actions
+        if (isUser) {
+            const copyBtn = item.querySelector('.btn-copy-msg');
+            if (copyBtn) {
+                copyBtn.addEventListener('click', () => {
+                    navigator.clipboard.writeText(msg.content);
+                    showToast('Copied to clipboard');
+                });
+            }
+
+            const editBtn = item.querySelector('.btn-edit-msg');
+            if (editBtn) {
+                editBtn.addEventListener('click', () => {
+                    if (elements.chatInput) {
+                        elements.chatInput.value = msg.content;
+                        elements.chatInput.focus();
+                        handleInputChange();
+                        scrollToBottom();
+                    }
+                });
+            }
+        }
+
+        // Assistant Message enhancements
         if (!isUser) {
+            // Code block headers with syntax copy
             item.querySelectorAll('pre code').forEach((codeBlock) => {
                 const pre = codeBlock.parentElement;
                 const wrapper = document.createElement('div');
@@ -317,6 +567,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     setTimeout(() => {
                         btn.innerHTML = '<i class="fa-regular fa-copy"></i> Copy code';
                     }, 2000);
+                    showToast('Code copied to clipboard');
                 });
 
                 pre.parentNode.insertBefore(wrapper, pre);
@@ -331,6 +582,15 @@ document.addEventListener('DOMContentLoaded', () => {
                     navigator.clipboard.writeText(msg.content);
                     copyMsgBtn.innerHTML = '<i class="fa-solid fa-check"></i>';
                     setTimeout(() => { copyMsgBtn.innerHTML = '<i class="fa-regular fa-copy"></i>'; }, 1500);
+                    showToast('Response copied to clipboard');
+                });
+            }
+
+            // Regenerate Response Action
+            const regenBtn = item.querySelector('.btn-regenerate-msg');
+            if (regenBtn) {
+                regenBtn.addEventListener('click', () => {
+                    regenerateLastResponse();
                 });
             }
 
@@ -365,6 +625,23 @@ document.addEventListener('DOMContentLoaded', () => {
         if (elements.chatContainer) {
             elements.chatContainer.scrollTop = elements.chatContainer.scrollHeight;
         }
+    }
+
+    // Regenerate last response
+    function regenerateLastResponse() {
+        if (state.isGenerating) return;
+        const lastUserIndex = state.currentMessages.map(m => m.role).lastIndexOf('user');
+        if (lastUserIndex === -1) return;
+
+        const lastUserPrompt = state.currentMessages[lastUserIndex].content;
+        
+        // Remove trailing assistant response if any
+        if (state.currentMessages.length > lastUserIndex + 1) {
+            state.currentMessages = state.currentMessages.slice(0, lastUserIndex + 1);
+            renderMessages(state.currentMessages);
+        }
+
+        sendMessage(lastUserPrompt, true);
     }
 
     // Text to Speech
@@ -436,25 +713,60 @@ document.addEventListener('DOMContentLoaded', () => {
         elements.voiceInputBtn.style.display = 'none';
     }
 
-    // Send Message
-    async function sendMessage(customPrompt) {
-        const text = customPrompt || (elements.chatInput ? elements.chatInput.value.trim() : '');
-        if (!text || state.isGenerating) return;
+    // Stop Generation
+    function stopGeneration() {
+        if (state.abortController) {
+            state.abortController.abort();
+            state.abortController = null;
+        }
+        setGeneratingState(false);
+    }
 
-        state.isGenerating = true;
-        if (elements.chatInput) {
+    function setGeneratingState(isGenerating) {
+        state.isGenerating = isGenerating;
+        if (!elements.sendBtn) return;
+
+        if (isGenerating) {
+            elements.sendBtn.innerHTML = '<i class="fa-solid fa-square"></i>';
+            elements.sendBtn.classList.add('btn-stop');
+            elements.sendBtn.title = 'Stop generating';
+            elements.sendBtn.disabled = false;
+            if (elements.typingIndicator) elements.typingIndicator.style.display = 'flex';
+        } else {
+            elements.sendBtn.innerHTML = '<i class="fa-solid fa-arrow-up"></i>';
+            elements.sendBtn.classList.remove('btn-stop');
+            elements.sendBtn.title = 'Send message';
+            if (elements.typingIndicator) elements.typingIndicator.style.display = 'none';
+            handleInputChange();
+        }
+    }
+
+    // Send Message
+    async function sendMessage(customPrompt, isRegen = false) {
+        if (state.isGenerating) {
+            stopGeneration();
+            return;
+        }
+
+        const text = customPrompt || (elements.chatInput ? elements.chatInput.value.trim() : '');
+        if (!text) return;
+
+        setGeneratingState(true);
+        state.abortController = new AbortController();
+
+        if (elements.chatInput && !isRegen) {
             elements.chatInput.value = '';
             elements.chatInput.style.height = 'auto';
             handleInputChange();
         }
 
-        // Add User Message to UI
-        const userMsg = { role: 'user', content: text, timestamp: new Date().toISOString() };
-        appendMessageToFeed(userMsg);
-        state.currentMessages.push(userMsg);
+        // Add User Message to UI if not regenerating
+        if (!isRegen) {
+            const userMsg = { role: 'user', content: text, timestamp: new Date().toISOString() };
+            appendMessageToFeed(userMsg);
+            state.currentMessages.push(userMsg);
+        }
 
-        // Show Typing Indicator
-        if (elements.typingIndicator) elements.typingIndicator.style.display = 'flex';
         scrollToBottom();
 
         try {
@@ -464,6 +776,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 persona: state.persona,
                 provider: state.provider,
                 model: state.model,
+                tone: state.tone,
                 apiKey: state.apiKey,
                 temperature: state.temperature
             };
@@ -471,7 +784,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const response = await fetch('/api/chat', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
+                body: JSON.stringify(payload),
+                signal: state.abortController.signal
             });
 
             if (!response.ok) {
@@ -495,16 +809,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
             loadSessions();
         } catch (err) {
-            const errorMsg = {
-                role: 'assistant',
-                content: `⚠️ **Error:** ${err.message}`,
-                tokens: 0,
-                latencyMs: 0
-            };
-            appendMessageToFeed(errorMsg);
+            if (err.name === 'AbortError') {
+                showToast('Generation stopped');
+            } else {
+                const errorMsg = {
+                    role: 'assistant',
+                    content: `⚠️ **Error:** ${err.message}`,
+                    tokens: 0,
+                    latencyMs: 0
+                };
+                appendMessageToFeed(errorMsg);
+            }
         } finally {
-            state.isGenerating = false;
-            if (elements.typingIndicator) elements.typingIndicator.style.display = 'none';
+            setGeneratingState(false);
+            state.abortController = null;
             scrollToBottom();
             elements.chatInput?.focus();
         }
@@ -513,6 +831,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // Input handlers
     function handleInputChange() {
         if (!elements.chatInput || !elements.sendBtn) return;
+        if (state.isGenerating) return;
+
         const len = elements.chatInput.value.trim().length;
         elements.sendBtn.disabled = len === 0;
 
@@ -531,22 +851,17 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     if (elements.sendBtn) {
-        elements.sendBtn.addEventListener('click', () => sendMessage());
+        elements.sendBtn.addEventListener('click', () => {
+            if (state.isGenerating) {
+                stopGeneration();
+            } else {
+                sendMessage();
+            }
+        });
     }
 
     // Top New Chat Button
-    if (elements.topNewChatBtn) {
-        elements.topNewChatBtn.addEventListener('click', createNewChat);
-    }
-
-    // Starter Prompt Chips
-    document.querySelectorAll('.starter-chip').forEach(card => {
-        card.addEventListener('click', () => {
-            const prompt = card.getAttribute('data-prompt');
-            sendMessage(prompt);
-        });
-    });
-
+    if (elements.topNewChatBtn) elements.topNewChatBtn.addEventListener('click', createNewChat);
     if (elements.newChatBtn) elements.newChatBtn.addEventListener('click', createNewChat);
     if (elements.clearAllBtn) elements.clearAllBtn.addEventListener('click', clearAllSessions);
 
@@ -555,6 +870,10 @@ document.addEventListener('DOMContentLoaded', () => {
         elements.settingsModalBtn.addEventListener('click', () => {
             if (elements.providerSelect) elements.providerSelect.value = state.provider;
             if (elements.apiKeyInput) elements.apiKeyInput.value = state.apiKey;
+            if (elements.modelInput) elements.modelInput.value = state.model;
+            if (elements.toneSelect) elements.toneSelect.value = state.tone;
+            if (elements.tempSlider) elements.tempSlider.value = state.temperature;
+            if (elements.tempValue) elements.tempValue.textContent = state.temperature;
             updateSettingsVisibility();
             elements.settingsModal?.classList.add('show');
         });
@@ -563,6 +882,12 @@ document.addEventListener('DOMContentLoaded', () => {
     if (elements.closeSettingsModal) {
         elements.closeSettingsModal.addEventListener('click', () => {
             elements.settingsModal?.classList.remove('show');
+        });
+    }
+
+    if (elements.tempSlider && elements.tempValue) {
+        elements.tempSlider.addEventListener('input', (e) => {
+            elements.tempValue.textContent = e.target.value;
         });
     }
 
@@ -588,11 +913,18 @@ document.addEventListener('DOMContentLoaded', () => {
         elements.saveSettingsBtn.addEventListener('click', () => {
             state.provider = elements.providerSelect.value;
             state.apiKey = elements.apiKeyInput.value.trim() || DEFAULT_KEY;
+            state.model = elements.modelInput.value.trim() || (state.provider === 'gemini' ? 'gemini-2.5-flash' : 'gpt-4o-mini');
+            state.tone = elements.toneSelect.value;
+            state.temperature = parseFloat(elements.tempSlider.value);
 
             localStorage.setItem('nova_provider', state.provider);
             localStorage.setItem('nova_api_key', state.apiKey);
+            localStorage.setItem('nova_model', state.model);
+            localStorage.setItem('nova_tone', state.tone);
+            localStorage.setItem('nova_temperature', state.temperature);
 
             elements.settingsModal?.classList.remove('show');
+            showToast('Settings saved');
         });
     }
 
@@ -600,13 +932,52 @@ document.addEventListener('DOMContentLoaded', () => {
         elements.resetSettingsBtn.addEventListener('click', () => {
             state.provider = 'gemini';
             state.apiKey = DEFAULT_KEY;
+            state.model = 'gemini-2.5-flash';
+            state.tone = 'detailed';
+            state.temperature = 0.7;
 
             localStorage.removeItem('nova_provider');
             localStorage.removeItem('nova_api_key');
+            localStorage.removeItem('nova_model');
+            localStorage.removeItem('nova_tone');
+            localStorage.removeItem('nova_temperature');
 
             if (elements.providerSelect) elements.providerSelect.value = 'gemini';
             if (elements.apiKeyInput) elements.apiKeyInput.value = DEFAULT_KEY;
+            if (elements.modelInput) elements.modelInput.value = 'gemini-2.5-flash';
+            if (elements.toneSelect) elements.toneSelect.value = 'detailed';
+            if (elements.tempSlider) elements.tempSlider.value = 0.7;
+            if (elements.tempValue) elements.tempValue.textContent = '0.7';
+
             updateSettingsVisibility();
+            showToast('Settings reset to defaults');
+        });
+    }
+
+    // Status / Diagnostics Modal
+    if (elements.statusModalBtn) {
+        elements.statusModalBtn.addEventListener('click', async () => {
+            try {
+                const res = await fetch('/api/status');
+                if (res.ok) {
+                    const data = await res.json();
+                    if (elements.diagAppName) elements.diagAppName.textContent = (data.application || 'ChatGPT') + ' v' + (data.version || '1.0');
+                    if (elements.diagJavaVersion) elements.diagJavaVersion.textContent = data.javaVersion || 'Ready';
+                    if (elements.diagMemory) elements.diagMemory.textContent = `${data.usedMemoryMb || 0} MB / ${data.totalMemoryMb || 0} MB`;
+                    if (elements.diagUptime) elements.diagUptime.textContent = `${data.uptimeSeconds || 0}s`;
+                    if (elements.diagSessions) elements.diagSessions.textContent = data.activeSessions || 0;
+                    if (elements.diagPersonas) elements.diagPersonas.textContent = data.availablePersonas || PERSONAS.length;
+                }
+            } catch (err) {
+                // Handled
+            }
+            elements.statusModal?.classList.add('show');
+        });
+    }
+
+    if (elements.closeStatusModal) {
+        elements.closeStatusModal.addEventListener('click', () => {
+            elements.statusModal?.classList.remove('show');
         });
     }
 
@@ -643,13 +1014,15 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        let md = `# ChatGPT Conversation\n\n*Exported on ${new Date().toLocaleString()}*\n\n---\n\n`;
+        const currentPersona = PERSONAS.find(p => p.id === state.persona) || PERSONAS[0];
+        let md = `# ${currentPersona.name} Conversation\n\n*Exported on ${new Date().toLocaleString()}*\n\n---\n\n`;
         state.currentMessages.forEach(msg => {
-            const role = msg.role === 'user' ? '### 👤 You' : '### 🤖 ChatGPT';
+            const role = msg.role === 'user' ? '### 👤 You' : `### 🤖 ${currentPersona.name}`;
             md += `${role}\n\n${msg.content}\n\n---\n\n`;
         });
 
         downloadFile(md, `chatgpt-export-${Date.now()}.md`, 'text/markdown');
+        showToast('Exported as Markdown');
     }
 
     function exportAsJson() {
@@ -661,10 +1034,12 @@ document.addEventListener('DOMContentLoaded', () => {
         const data = {
             exportDate: new Date().toISOString(),
             sessionId: state.sessionId,
+            persona: state.persona,
             messages: state.currentMessages
         };
 
         downloadFile(JSON.stringify(data, null, 2), `chatgpt-session-${Date.now()}.json`, 'application/json');
+        showToast('Exported as JSON');
     }
 
     function downloadFile(content, fileName, contentType) {
@@ -682,10 +1057,44 @@ document.addEventListener('DOMContentLoaded', () => {
         return text.replace(/[&<>"']/g, m => map[m]);
     }
 
+    // Global click listener for backdrop and outside clicks
+    window.addEventListener('click', (e) => {
+        // Close modals on backdrop click
+        if (e.target === elements.settingsModal) elements.settingsModal?.classList.remove('show');
+        if (e.target === elements.statusModal) elements.statusModal?.classList.remove('show');
+        if (e.target === elements.exportModal) elements.exportModal?.classList.remove('show');
+
+        // Close model dropdown if clicked outside
+        if (elements.modelDropdown && elements.modelDropdown.classList.contains('show')) {
+            if (!elements.modelDropdown.contains(e.target) && !elements.modelPillBtn.contains(e.target)) {
+                closeModelDropdown();
+            }
+        }
+    });
+
+    // Keyboard Shortcuts
+    window.addEventListener('keydown', (e) => {
+        // Escape closes modals and dropdowns
+        if (e.key === 'Escape') {
+            elements.settingsModal?.classList.remove('show');
+            elements.statusModal?.classList.remove('show');
+            elements.exportModal?.classList.remove('show');
+            closeModelDropdown();
+        }
+
+        // Ctrl+Shift+O / Cmd+Shift+O creates new chat
+        if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === 'O' || e.key === 'o')) {
+            e.preventDefault();
+            createNewChat();
+        }
+    });
+
     // Initialize
+    renderModelDropdown();
     if (state.sessionId) {
         selectSession(state.sessionId);
     } else {
+        renderWelcomeScreen(state.persona);
         renderMessages([]);
         loadSessions();
     }
