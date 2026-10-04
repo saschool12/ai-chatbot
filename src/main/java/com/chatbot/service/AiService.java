@@ -92,38 +92,69 @@ public class AiService {
         sessionService.addMessage(sessionId, userMsg);
 
         // 2. Determine reply using requested provider
-        String provider = request.getProvider() != null ? request.getProvider().toLowerCase() : "gemini";
-        String model = request.getModel() != null ? request.getModel() : "gemini-3.5-flash";
+        String provider = request.getProvider() != null ? request.getProvider().toLowerCase() : "smart";
+        String model = request.getModel() != null ? request.getModel() : "nova-smart-v1";
         String apiKey = request.getApiKey() != null && !request.getApiKey().isBlank() ? request.getApiKey() : defaultGeminiKey;
-        String replyText;
+        String tone = request.getTone() != null ? request.getTone() : "detailed";
+        Double temperature = request.getTemperature() != null ? request.getTemperature() : 0.7;
+
+        String systemPrompt = persona.getSystemPrompt();
+        if ("concise".equalsIgnoreCase(tone)) {
+            systemPrompt += "\n\nTone: Direct, ultra-concise, and to the point. Omit unnecessary preamble.";
+        } else if ("technical".equalsIgnoreCase(tone)) {
+            systemPrompt += "\n\nTone: Senior Staff Engineer. Provide deep technical explanations, production-ready code, edge cases, and architectural considerations.";
+        } else if ("mentor".equalsIgnoreCase(tone)) {
+            systemPrompt += "\n\nTone: Friendly, encouraging mentor. Break concepts down into intuitive, step-by-step explanations with analogies.";
+        } else {
+            systemPrompt += "\n\nTone: Intelligent, natural, insightful, and formatted with clean markdown.";
+        }
+
+        String replyText = null;
 
         try {
-            if ("openai".equals(provider) && apiKey != null && !apiKey.isBlank()) {
-                replyText = externalLlmService.callOpenAiCompatible(
-                        apiKey,
-                        model,
-                        persona.getSystemPrompt(),
-                        session.getMessages(),
-                        request.getMessage(),
-                        request.getTemperature()
-                );
-            } else if ("gemini".equals(provider) && apiKey != null && !apiKey.isBlank()) {
-                replyText = externalLlmService.callGemini(
-                        apiKey,
-                        model,
-                        persona.getSystemPrompt(),
-                        session.getMessages(),
-                        request.getMessage()
-                );
-            } else {
-                // Built-in intelligent engine
-                provider = "builtin";
-                model = "Nova-Neural-v1";
+            if ("builtin".equals(provider)) {
                 replyText = builtInEngine.generateReply(request.getMessage(), personaId, session.getMessages());
+                model = "Nova-Neural-v1";
+            } else {
+                if ("openai".equals(provider) && apiKey != null && !apiKey.isBlank()) {
+                    replyText = externalLlmService.callOpenAiCompatible(
+                            apiKey,
+                            model,
+                            systemPrompt,
+                            session.getMessages(),
+                            request.getMessage(),
+                            temperature
+                    );
+                } else if ("gemini".equals(provider) && apiKey != null && !apiKey.isBlank()) {
+                    replyText = externalLlmService.callGemini(
+                            apiKey,
+                            model,
+                            systemPrompt,
+                            session.getMessages(),
+                            request.getMessage()
+                    );
+                }
+
+                if (replyText == null) {
+                    // Real smart LLM inference
+                    replyText = externalLlmService.callSmartLlm(systemPrompt, session.getMessages(), request.getMessage());
+                    if (replyText != null) {
+                        provider = "nova-smart";
+                        model = "Nova-Pro-v1";
+                    }
+                }
+
+                if (replyText == null) {
+                    // Fall back to built-in local engine
+                    provider = "builtin";
+                    model = "Nova-Neural-v1";
+                    replyText = builtInEngine.generateReply(request.getMessage(), personaId, session.getMessages());
+                }
             }
         } catch (Exception e) {
             replyText = builtInEngine.generateReply(request.getMessage(), personaId, session.getMessages());
             provider = "builtin (fallback)";
+            model = "Nova-Neural-v1";
         }
 
         long latencyMs = System.currentTimeMillis() - startTime;

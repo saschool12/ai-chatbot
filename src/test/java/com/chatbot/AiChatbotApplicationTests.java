@@ -74,4 +74,26 @@ class AiChatbotApplicationTests {
         assertEquals("builtin", response.getProvider());
         assertTrue(response.getTokens() > 0);
     }
+
+    @Test
+    void testBuiltInAiSimpleJavaPrompt() {
+        String reply = builtInEngine.generateReply("give me a simple java code example", "coder", Collections.emptyList());
+        assertNotNull(reply);
+        assertTrue(reply.contains("SimpleApp"), "Expected SimpleApp in simple java code response");
+        assertTrue(reply.contains("public static void main"), "Expected main entry point");
+    }
+
+    @Test
+    void testAiServiceWithToneAndPersona() {
+        ChatRequest request = new ChatRequest();
+        request.setMessage("Explain how HTTP works");
+        request.setPersona("coder");
+        request.setTone("concise");
+        request.setProvider("builtin");
+
+        ChatResponse response = aiService.processChat(request);
+        assertNotNull(response);
+        assertNotNull(response.getReply());
+        assertEquals("builtin", response.getProvider());
+    }
 }

@@ -9,6 +9,7 @@ document.addEventListener('DOMContentLoaded', () => {
         apiKey: localStorage.getItem('nova_api_key') || DEFAULT_KEY,
         model: localStorage.getItem('nova_model') || 'gemini-3.5-flash',
         temperature: parseFloat(localStorage.getItem('nova_temperature') || '0.7'),
+        tone: localStorage.getItem('nova_tone') || 'detailed',
         theme: localStorage.getItem('nova_theme') || 'dark',
         personas: [],
         currentMessages: [],
@@ -53,6 +54,7 @@ document.addEventListener('DOMContentLoaded', () => {
         toggleApiKeyVisibility: document.getElementById('toggleApiKeyVisibility'),
         modelGroup: document.getElementById('modelGroup'),
         modelInput: document.getElementById('modelInput'),
+        toneSelect: document.getElementById('toneSelect'),
         tempSlider: document.getElementById('tempSlider'),
         tempValue: document.getElementById('tempValue'),
         saveSettingsBtn: document.getElementById('saveSettingsBtn'),
@@ -565,7 +567,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 provider: state.provider,
                 model: state.model,
                 apiKey: state.apiKey,
-                temperature: state.temperature
+                temperature: state.temperature,
+                tone: state.tone
             };
 
             const response = await fetch('/api/chat', {
@@ -651,6 +654,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (elements.providerSelect) elements.providerSelect.value = state.provider;
             if (elements.apiKeyInput) elements.apiKeyInput.value = state.apiKey;
             if (elements.modelInput) elements.modelInput.value = state.model;
+            if (elements.toneSelect) elements.toneSelect.value = state.tone;
             if (elements.tempSlider) elements.tempSlider.value = state.temperature;
             if (elements.tempValue) elements.tempValue.textContent = state.temperature;
             updateSettingsVisibility();
@@ -694,11 +698,13 @@ document.addEventListener('DOMContentLoaded', () => {
             state.provider = elements.providerSelect.value;
             state.apiKey = elements.apiKeyInput.value.trim() || DEFAULT_KEY;
             state.model = elements.modelInput.value.trim() || (state.provider === 'gemini' ? 'gemini-3.5-flash' : 'gpt-4o-mini');
+            state.tone = elements.toneSelect ? elements.toneSelect.value : 'detailed';
             state.temperature = parseFloat(elements.tempSlider.value);
 
             localStorage.setItem('nova_provider', state.provider);
             localStorage.setItem('nova_api_key', state.apiKey);
             localStorage.setItem('nova_model', state.model);
+            localStorage.setItem('nova_tone', state.tone);
             localStorage.setItem('nova_temperature', state.temperature);
 
             updateHeaderInfo();
@@ -711,16 +717,19 @@ document.addEventListener('DOMContentLoaded', () => {
             state.provider = 'gemini';
             state.apiKey = DEFAULT_KEY;
             state.model = 'gemini-3.5-flash';
+            state.tone = 'detailed';
             state.temperature = 0.7;
 
             localStorage.removeItem('nova_provider');
             localStorage.removeItem('nova_api_key');
             localStorage.removeItem('nova_model');
+            localStorage.removeItem('nova_tone');
             localStorage.removeItem('nova_temperature');
 
             if (elements.providerSelect) elements.providerSelect.value = 'gemini';
             if (elements.apiKeyInput) elements.apiKeyInput.value = DEFAULT_KEY;
             if (elements.modelInput) elements.modelInput.value = 'gemini-3.5-flash';
+            if (elements.toneSelect) elements.toneSelect.value = 'detailed';
             if (elements.tempSlider) elements.tempSlider.value = 0.7;
             if (elements.tempValue) elements.tempValue.textContent = '0.7';
             updateSettingsVisibility();

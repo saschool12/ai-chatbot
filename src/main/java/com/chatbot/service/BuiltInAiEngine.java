@@ -88,6 +88,68 @@ public class BuiltInAiEngine {
     }
 
     private String handleCodingQueries(String lower, String raw) {
+        if (lower.contains("simple java") || lower.contains("basic java") || lower.contains("hello world") ||
+            (lower.contains("java") && (lower.contains("code") || lower.contains("make") || lower.contains("write") || lower.contains("create") || lower.contains("example") || lower.contains("program")) && !lower.contains("spring") && !lower.contains("quicksort"))) {
+            return """
+### ☕ Simple Java Code Example
+
+Here is a clean, classic Java program demonstrating a complete class with a `main` entry point, variables, methods, and output:
+
+```java
+// File: SimpleApp.java
+public class SimpleApp {
+
+    public static void main(String[] args) {
+        // 1. Basic greeting
+        String greeting = "Hello, World!";
+        System.out.println(greeting);
+
+        // 2. Variables and arithmetic
+        int a = 15;
+        int b = 25;
+        int sum = addNumbers(a, b);
+        System.out.println(a + " + " + b + " = " + sum);
+
+        // 3. Simple loop demonstration
+        System.out.print("Counting: ");
+        for (int i = 1; i <= 5; i++) {
+            System.out.print(i + " ");
+        }
+        System.out.println();
+    }
+
+    // A simple reusable method
+    public static int addNumbers(int x, int y) {
+        return x + y;
+    }
+}
+```
+
+#### How to Compile & Run:
+1. Save the code into a file named **`SimpleApp.java`**.
+2. Open your terminal in the same directory and compile:
+   ```bash
+   javac SimpleApp.java
+   ```
+3. Run the compiled application:
+   ```bash
+   java SimpleApp
+   ```
+
+#### Output:
+```text
+Hello, World!
+15 + 25 = 40
+Counting: 1 2 3 4 5 
+```
+
+#### Key Takeaways:
+- **`public class SimpleApp`**: In Java, all code must reside within a class. The filename must match the public class name exactly.
+- **`public static void main(String[] args)`**: The mandatory entry point that the JVM executes.
+- **`System.out.println()`**: Prints formatted text to the standard output console.
+""";
+        }
+
         if (lower.contains("java") && (lower.contains("spring") || lower.contains("rest") || lower.contains("api"))) {
             return """
 ### 🚀 Spring Boot REST Controller Example
@@ -440,20 +502,25 @@ And another:
     }
 
     private String generateSynthesizedResponse(String message, String persona, List<ChatMessage> history) {
+        String trimmed = message.trim();
+        String summary = trimmed.length() > 60 ? trimmed.substring(0, 57) + "..." : trimmed;
         return String.format("""
-### 💡 Insights & Analysis
+### ✦ Response
 
-You asked:
+Regarding your query:
 > *"%s"*
 
-#### Key Takeaways:
-1. **Context & Relevance:** Every complex inquiry benefits from breaking down components into core principles, practical implementation, and validation.
-2. **Actionable Steps:**
-   - Define your primary goal and constraints.
-   - Iterate on small, testable milestones.
-   - Use automated feedback loops to ensure consistency and quality.
+Here is a structured overview and practical guidance:
 
-> **Tip:** You can switch to the **Code Master**, **Science Tutor**, or **Career Coach** persona in the sidebar, or connect your **OpenAI / Gemini API key** in Settings for deeper real-time LLM inference!
-""", message.trim());
+1. **Direct Answer & Core Principles:**
+   To address *"%s"* effectively, break the task down into distinct, testable components. Establish your key constraints, expected inputs, and desired outputs before implementing.
+
+2. **Step-by-Step Implementation:**
+   - **Define Architecture:** Choose the appropriate design pattern or data structure for the problem.
+   - **Implement Clean Logic:** Focus on readability, type safety, and minimal coupling.
+   - **Validate & Test:** Run automated unit tests and benchmark performance under realistic workloads.
+
+Feel free to ask for specific code examples, deep architectural breakdowns, or step-by-step tutorials!
+""", trimmed, summary);
     }
 }

@@ -158,4 +158,56 @@ public class ExternalLlmService {
         }
         return "No response received from Gemini.";
     }
+
+    public String callSmartLlm(String systemPrompt, List<ChatMessage> history, String userMessage) {
+        try {
+            List<Map<String, String>> messages = new ArrayList<>();
+            if (systemPrompt != null && !systemPrompt.isBlank()) {
+                messages.add(Map.of(
+                        "role", "system",
+                        "content", systemPrompt + "\n\nFormatting: Use clean, professional, readable markdown with proper code syntax highlighting. Always answer the user's question directly, insightfully, and thoroughly."
+                ));
+            }
+
+            int start = Math.max(0, history != null ? history.size() - 6 : 0);
+            if (history != null) {
+                for (int i = start; i < history.size(); i++) {
+                    ChatMessage msg = history.get(i);
+                    messages.add(Map.of("role", msg.getRole(), "content", msg.getContent()));
+                }
+            }
+            messages.add(Map.of("role", "user", "content", userMessage));
+
+            Map<String, Object> payload = new HashMap<>();
+            payload.put("model", "openai");
+            payload.put("messages", messages);
+            payload.put("temperature", 0.7);
+
+            String jsonPayload = objectMapper.writeValueAsString(payload);
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create("https://text.pollinations.ai/openai"))
+                    .header("Content-Type", "application/json")
+                    .timeout(Duration.ofSeconds(15))
+                    .POST(HttpRequest.BodyPublishers.ofString(jsonPayload))
+                    .build();
+
+            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+            if (response.statusCode() == 200) {
+                JsonNode root = objectMapper.readTree(response.body());
+                JsonNode choices = root.get("choices");
+                if (choices != null && choices.isArray() && choices.size() > 0) {
+                    JsonNode choice = choices.get(0);
+                    if (choice.has("message") && choice.get("message").has("content")) {
+                        String content = choice.get("message").get("content").asText();
+                        if (content != null && !content.isBlank()) {
+                            return content;
+                        }
+                    }
+                }
+            }
+        } catch (Exception ignored) {
+            // Gracefully fall back to local rule engine
+        }
+        return null;
+    }
 }

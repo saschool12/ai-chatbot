@@ -8,6 +8,8 @@ public class ChatRequest {
     private String model = "neural-expert-v1";
     private String apiKey;
     private Double temperature = 0.7;
+    private String mode = "pro";
+    private String tone = "detailed";
 
     public ChatRequest() {}
 
@@ -70,5 +72,21 @@ public class ChatRequest {
 
     public void setTemperature(Double temperature) {
         this.temperature = temperature;
+    }
+
+    public String getMode() {
+        return mode;
+    }
+
+    public void setMode(String mode) {
+        this.mode = mode;
+    }
+
+    public String getTone() {
+        return tone;
+    }
+
+    public void setTone(String tone) {
+        this.tone = tone;
     }
 }

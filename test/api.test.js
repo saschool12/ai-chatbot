@@ -129,6 +129,43 @@ test('API: /api/chat with coder persona provides Java code', async () => {
   assert.equal(res.body.persona, 'coder');
 });
 
+test('API: /api/chat provides clean simple Java code example', async () => {
+  const req = {
+    method: 'POST',
+    body: {
+      message: 'give me a simple java code example',
+      provider: 'builtin',
+      persona: 'coder'
+    },
+    headers: {}
+  };
+  const res = mockRes();
+  await chatHandler(req, res);
+
+  assert.equal(res.statusCode, 200);
+  assert.ok(res.body.reply.includes('SimpleApp'));
+  assert.ok(res.body.reply.includes('main'));
+});
+
+test('API: /api/chat handles custom tone parameter', async () => {
+  const req = {
+    method: 'POST',
+    body: {
+      message: 'explain quantum computing',
+      provider: 'builtin',
+      persona: 'science',
+      tone: 'concise'
+    },
+    headers: {}
+  };
+  const res = mockRes();
+  await chatHandler(req, res);
+
+  assert.equal(res.statusCode, 200);
+  assert.ok(res.body.reply);
+  assert.equal(res.body.persona, 'science');
+});
+
 test('API: /api/status returns diagnostic metadata', async () => {
   const req = { method: 'GET', headers: {} };
   const res = mockRes();

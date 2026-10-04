@@ -29,7 +29,7 @@ async function callGemini(apiKey, model, systemPrompt, history, userMessage) {
       const body = {
         contents: contents,
         system_instruction: {
-          parts: [{ text: `${systemPrompt}\n\nTone: Intelligent, natural, insightful, and formatted with clean markdown.` }]
+          parts: [{ text: systemPrompt }]
         }
       };
 
@@ -111,6 +111,18 @@ module.exports = async (req, res) => {
   const session = getOrCreateSession(body.sessionId, personaId);
   const sessionId = session.id;
 
+  const tone = body.tone || 'detailed';
+  let systemPrompt = personaObj.systemPrompt;
+  if (tone === 'concise') {
+    systemPrompt += '\n\nTone: Direct, ultra-concise, and to the point. Omit unnecessary preamble.';
+  } else if (tone === 'technical') {
+    systemPrompt += '\n\nTone: Senior Staff Engineer. Provide deep technical explanations, production-ready code, edge cases, and architectural considerations.';
+  } else if (tone === 'mentor') {
+    systemPrompt += '\n\nTone: Friendly, encouraging mentor. Break concepts down into intuitive, step-by-step explanations with analogies.';
+  } else {
+    systemPrompt += '\n\nTone: Intelligent, natural, insightful, and formatted with clean markdown.';
+  }
+
   // Add user message
   const userTokens = estimateTokens(message);
   const userMsg = {
@@ -134,7 +146,7 @@ module.exports = async (req, res) => {
     } else {
       if (provider === 'openai' && body.apiKey && body.apiKey.trim()) {
         const messages = [
-          { role: 'system', content: personaObj.systemPrompt },
+          { role: 'system', content: systemPrompt },
           ...session.messages.slice(-8).map(m => ({ role: m.role, content: m.content })),
           { role: 'user', content: message }
         ];
@@ -162,7 +174,7 @@ module.exports = async (req, res) => {
         // Primary: Google Gemini
         const geminiKey = (body.apiKey && body.apiKey.trim()) ? body.apiKey.trim() : DEFAULT_GEMINI_KEY;
         if (geminiKey) {
-          replyText = await callGemini(geminiKey, model, personaObj.systemPrompt, session.messages, message);
+          replyText = await callGemini(geminiKey, model, systemPrompt, session.messages, message);
           if (replyText) {
             provider = 'gemini';
             model = model || 'gemini-2.5-flash';
@@ -173,10 +185,10 @@ module.exports = async (req, res) => {
       if (!replyText) {
         // Secondary: Free OpenAI-compatible LLM
         const historyWithNew = [...session.messages.slice(-6), userMsg];
-        replyText = await callFreeLlm(historyWithNew, personaObj.systemPrompt);
+        replyText = await callFreeLlm(historyWithNew, systemPrompt);
         if (replyText) {
-          provider = 'nova-llm';
-          model = 'gpt-oss-20b';
+          provider = 'nova-smart';
+          model = 'Nova-Pro-v1';
         }
       }
 
@@ -184,13 +196,13 @@ module.exports = async (req, res) => {
         // Tertiary: Built-in local rule engine
         replyText = generateReply(message, personaId);
         provider = 'builtin';
-        model = 'Nova-Neural-Fallback';
+        model = 'Nova-Neural-v1';
       }
     }
   } catch (err) {
     replyText = generateReply(message, personaId);
-    provider = 'builtin';
-    model = 'Nova-Neural-Fallback';
+    provider = 'builtin (fallback)';
+    model = 'Nova-Neural-v1';
   }
 
   const latencyMs = Date.now() - startTime;

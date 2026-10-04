@@ -18,6 +18,7 @@ A modern, ultra-minimal full-stack AI Chatbot application with dual backend supp
   - **OpenAI Compatible**: Connect OpenAI (GPT-4o, GPT-3.5), Groq, or Ollama.
   - **Nova Smart Engine (Free LLM)**: Fast, free LLM fallback requiring zero API keys.
   - **Built-in Offline Engine**: Built-in mathematical evaluation engine, code synthesizer, and rule-based intelligence.
+- **Customizable Response Tone & Style**: Choose between *Balanced & Detailed*, *Concise & Direct*, *Senior Staff Engineer (Technical)*, and *Friendly Mentor*.
 - **Session Management**: Multi-session conversation history tracking, session switching, and session resets.
 - **Chat Export**: Instant export of conversations to formatted **Markdown (.md)** or structured **JSON**.
 - **Voice Capabilities**: Built-in Speech-to-Text (voice typing) and Text-to-Speech (audio read-aloud).
